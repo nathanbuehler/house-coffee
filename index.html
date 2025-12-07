@@ -495,20 +495,20 @@
         return data || [];
       }
 
-      async function fetchMenuItems(menuId) {
-        // For now, we load drinks directly from the drinks table.
-        const { data, error } = await supabaseClient
-          .from("drinks")
-          .select("*, categories(name)")
-          .order("name", { ascending: true });
+async function fetchMenuItems(menuId) {
+  const { data, error } = await supabaseClient
+    .from("drinks")
+    .select("*, categories(name, sort_order)")
+    .order("name", { ascending: true });
 
-        if (error) {
-          console.error("Error fetching drinks for menu:", error);
-          return [];
-        }
+  if (error) {
+    console.error("Error fetching drinks for menu:", error);
+    return [];
+  }
 
-        return data || [];
-      }
+  return data || [];
+}
+
 
       async function fetchMenuSyrups(menuId) {
         const { data, error } = await supabaseClient
@@ -525,16 +525,32 @@
         return data || [];
       }
 
-      function groupDrinksByCategory(drinks) {
-        const grouped = {};
-        for (const drink of drinks) {
-          const category =
-            (drink.categories && drink.categories.name) || "Other";
-          if (!grouped[category]) grouped[category] = [];
-          grouped[category].push(drink);
-        }
-        return grouped;
-      }
+function groupDrinksByCategory(drinks) {
+  const grouped = new Map();
+
+  for (const drink of drinks) {
+    const catName =
+      (drink.categories && drink.categories.name) || "Other";
+    const sortOrder =
+      (drink.categories && drink.categories.sort_order) ?? 9999;
+
+    if (!grouped.has(catName)) {
+      grouped.set(catName, { sortOrder, items: [] });
+    }
+    grouped.get(catName).items.push(drink);
+  }
+
+  // Return an array sorted by sort_order then name
+  return Array.from(grouped.entries()).sort((a, b) => {
+    const sa = a[1].sortOrder;
+    const sb = b[1].sortOrder;
+    if (sa === sb) {
+      return a[0].localeCompare(b[0]);
+    }
+    return sa - sb;
+  });
+}
+
 
       function renderMenu() {
         menuContainerEl.innerHTML = "";
