@@ -238,7 +238,7 @@
         resize: vertical;
       }
 
-      /* QOL: make inline rows vertical at all sizes */
+      /* Make inline rows vertical */
       .form-row-inline {
         display: block;
       }
@@ -315,7 +315,7 @@
   <body>
     <header>
       <div class="header-main">
-        <h1>Thistle & Cherry Blossom</h1>
+        <h1>Nathan's Coffee</h1>
         <p>Pick a drink, add your preferences, submit. No tipping prompt, you’re welcome.</p>
       </div>
       <nav class="header-nav">
@@ -371,7 +371,7 @@
             </select>
           </div>
 
-          <!-- Now vertical: milk section then iced section -->
+          <!-- Vertical: milk + iced -->
           <div class="form-row-inline">
             <div class="form-row">
               <label for="milk-select">Milk</label>
@@ -399,7 +399,7 @@
             </div>
           </div>
 
-          <!-- Now vertical: syrup choice then flavour -->
+          <!-- Vertical: syrup choice + flavour -->
           <div class="form-row-inline">
             <div class="form-row">
               <label>Add syrup?</label>
@@ -495,20 +495,19 @@
         return data || [];
       }
 
-async function fetchMenuItems(menuId) {
-  const { data, error } = await supabaseClient
-    .from("drinks")
-    .select("*, categories(name, sort_order)")
-    .order("name", { ascending: true });
+      async function fetchMenuItems(menuId) {
+        const { data, error } = await supabaseClient
+          .from("drinks")
+          .select("*, categories(name, sort_order)")
+          .order("name", { ascending: true });
 
-  if (error) {
-    console.error("Error fetching drinks for menu:", error);
-    return [];
-  }
+        if (error) {
+          console.error("Error fetching drinks for menu:", error);
+          return [];
+        }
 
-  return data || [];
-}
-
+        return data || [];
+      }
 
       async function fetchMenuSyrups(menuId) {
         const { data, error } = await supabaseClient
@@ -525,32 +524,31 @@ async function fetchMenuItems(menuId) {
         return data || [];
       }
 
-function groupDrinksByCategory(drinks) {
-  const grouped = new Map();
+      // Group drinks by category, track sort order, and return sorted array
+      function groupDrinksByCategory(drinks) {
+        const grouped = new Map();
 
-  for (const drink of drinks) {
-    const catName =
-      (drink.categories && drink.categories.name) || "Other";
-    const sortOrder =
-      (drink.categories && drink.categories.sort_order) ?? 9999;
+        for (const drink of drinks) {
+          const catName =
+            (drink.categories && drink.categories.name) || "Other";
+          const sortOrder =
+            (drink.categories && drink.categories.sort_order) ?? 9999;
 
-    if (!grouped.has(catName)) {
-      grouped.set(catName, { sortOrder, items: [] });
-    }
-    grouped.get(catName).items.push(drink);
-  }
+          if (!grouped.has(catName)) {
+            grouped.set(catName, { sortOrder, items: [] });
+          }
+          grouped.get(catName).items.push(drink);
+        }
 
-  // Return an array sorted by sort_order then name
-  return Array.from(grouped.entries()).sort((a, b) => {
-    const sa = a[1].sortOrder;
-    const sb = b[1].sortOrder;
-    if (sa === sb) {
-      return a[0].localeCompare(b[0]);
-    }
-    return sa - sb;
-  });
-}
-
+        return Array.from(grouped.entries()).sort((a, b) => {
+          const sa = a[1].sortOrder;
+          const sb = b[1].sortOrder;
+          if (sa === sb) {
+            return a[0].localeCompare(b[0]);
+          }
+          return sa - sb;
+        });
+      }
 
       function renderMenu() {
         menuContainerEl.innerHTML = "";
@@ -563,12 +561,12 @@ function groupDrinksByCategory(drinks) {
 
         const grouped = groupDrinksByCategory(currentMenuDrinks);
 
-        for (const [categoryName, items] of Object.entries(grouped)) {
-const categoryDiv = document.createElement("div");
-categoryDiv.className = "menu-category collapsed"; // default collapsed
+        for (const [categoryName, group] of grouped) {
+          const items = group.items;
 
+          const categoryDiv = document.createElement("div");
+          categoryDiv.className = "menu-category collapsed"; // default collapsed
 
-          // Header (clickable)
           const header = document.createElement("div");
           header.className = "menu-category-header";
 
@@ -576,15 +574,13 @@ categoryDiv.className = "menu-category collapsed"; // default collapsed
           title.className = "menu-category-title";
           title.textContent = categoryName;
 
-const chevron = document.createElement("span");
-chevron.className = "menu-category-chevron";
-chevron.textContent = "▸";
-
+          const chevron = document.createElement("span");
+          chevron.className = "menu-category-chevron";
+          chevron.textContent = "▸";
 
           header.appendChild(title);
           header.appendChild(chevron);
 
-          // Container for drinks
           const drinksContainer = document.createElement("div");
           drinksContainer.className = "menu-drinks-container";
 
@@ -625,7 +621,6 @@ chevron.textContent = "▸";
             drinksContainer.appendChild(card);
           });
 
-          // Toggle behaviour
           header.addEventListener("click", () => {
             const isCollapsed = categoryDiv.classList.toggle("collapsed");
             chevron.textContent = isCollapsed ? "▸" : "▾";
