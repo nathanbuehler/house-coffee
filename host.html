@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>House Coffee – Host</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1, h2, h3 {
+      margin-bottom: 10px;
+    }
+    .section {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #eee;
+    }
+    .drink, .syrup-item, .category-item, .menu-item {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .drink-header, .syrup-header, .category-header, .menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .drink-name, .syrup-name, .category-name, .menu-name {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    form {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+    input, select, button, textarea {
+      font: inherit;
+      padding: 6px 8px;
+      margin-top: 4px;
+      box-sizing: border-box;
+    }
+    input, select, textarea {
+      width: 100%;
+    }
+    button {
+      cursor: pointer;
+    }
+    #orders {
+      list-style: none;
+      padding-left: 0;
+    }
+    #orders li {
+      padding: 6px 8px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .order-text {
+      flex: 1;
+    }
+    .order-actions button,
+    .drink-header button,
+    .syrup-header button,
+    .category-header button,
+    .menu-header button {
+      padding: 4px 8px;
+      font-size: 0.85rem;
+    }
+    .empty-text {
+      color: #777;
+      font-style: italic;
+    }
+    .nav {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .nav button {
+      font: inherit;
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background: #f5f5f5;
+      cursor: pointer;
+    }
+    .nav button.active {
+      font-weight: 600;
+      background: #ddd;
+    }
+    .error-text {
+      color: #b00;
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+    #current-menu-indicator {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 8px;
+    }
+  </style>
+
+  <!-- Supabase JS via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="nav">
+    <button type="button" onclick="window.location.href='/'">
+      Guest view
+    </button>
+    <button class="active" type="button" onclick="window.location.href='host.html'">
+      Host view
+    </button>
+  </div>
+
+  <h1>House Coffee – Host</h1>
+
+  <!-- Manage menus -->
+  <section class="section">
+    <h2>Manage menus</h2>
+    <div id="menu-list"></div>
+    <div id="menu-error" class="error-text"></div>
+
+    <h3>Add menu</h3>
+    <form id="menu-form">
+      <label>
+        Menu name
+        <input id="menu-name-input" required />
+      </label>
+      <button type="submit">Add menu</button>
+    </form>
+
+    <h3>Current editing menu</h3>
+    <label>
+      Editing menu
+      <select id="current-menu-select"></select>
+    </label>
+    <div id="current-menu-indicator"></div>
+  </section>
+
+  <!-- Manage drinks for selected menu -->
+  <section class="section">
+    <h2>Manage drinks for selected menu</h2>
+    <div id="menu-items"></div>
+
+    <h3>Add a drink</h3>
+    <form id="drink-form">
+      <label>
+        Drink name
+        <input id="drink-name-input" required />
+      </label>
+      <label>
+        Category
+        <select id="category-select"></select>
+      </label>
+      <label id="milks-label">
+        Milk options (comma separated)
+        <input id="drink-milks-input" placeholder="Whole, Skim, Oat" />
+      </label>
+      <button type="submit">Add to menu</button>
+    </form>
+    <div id="drink-error" class="error-text"></div>
+  </section>
+
+  <!-- Manage categories -->
+  <section class="section">
+    <h2>Manage categories</h2>
+    <div id="category-list"></div>
+    <div id="category-error" class="error-text"></div>
+
+    <h3>Add category</h3>
+    <form id="category-form">
+      <label>
+        Category name
+        <input id="category-name-input" required />
+      </label>
+      <button type="submit">Add category</button>
+    </form>
+  </section>
+
+  <!-- Manage syrups -->
+  <section class="section">
+    <h2>Manage syrups</h2>
+    <div id="syrup-list"></div>
+
+    <h3>Add syrup</h3>
+    <form id="syrup-form">
+      <label>
+        Flavour name
+        <input id="syrup-name-input" required />
+      </label>
+      <button type="submit">Add syrup</button>
+    </form>
+  </section>
+
+  <!-- Order queue -->
+  <section class="section">
+    <h2>Order queue</h2>
+    <ul id="orders"></ul>
+  </section>
+
+  <!-- Manual order -->
+  <section class="section">
+    <h2>Place an order (manual)</h2>
+    <form id="order-form">
+      <label>
+        Drink
+        <select id="drink-select"></select>
+      </label>
+      <label>
+        Milk
+        <select id="milk-select"></select>
+      </label>
+      <label>
+        Name
+        <input id="customer-name" required />
+      </label>
+      <button type="submit">Add to queue</button>
+    </form>
+  </section>
+
+  <script>
+    // ====== SUPABASE CONFIG ======
+    const SUPABASE_URL = "https://cyfdiuyjzcrommxldpwp.supabase.co";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5ZmRpdXlqemNyb21teGxkcHdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNDI0NTAsImV4cCI6MjA4MDYxODQ1MH0.e1gLM0wDzIifa1tbKkaJ7KjIz9038cBSNpZBfYdsSOM";
+
+    const supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    // DOM refs
+    const menuListDiv = document.getElementById("menu-list");
+    const menuForm = document.getElementById("menu-form");
+    const menuNameInput = document.getElementById("menu-name-input");
+    const menuErrorDiv = document.getElementById("menu-error");
+    const currentMenuSelect = document.getElementById("current-menu-select");
+    const currentMenuIndicator = document.getElementById("current-menu-indicator");
+
+    const menuItemsDiv = document.getElementById("menu-items");
+    const drinkForm = document.getElementById("drink-form");
+    const drinkNameInput = document.getElementById("drink-name-input");
+    const drinkMilksInput = document.getElementById("drink-milks-input");
+    const categorySelect = document.getElementById("category-select");
+    const milksLabel = document.getElementById("milks-label");
+    const drinkErrorDiv = document.getElementById("drink-error");
+
+    const categoryListDiv = document.getElementById("category-list");
+    const categoryForm = document.getElementById("category-form");
+    const categoryNameInput = document.getElementById("category-name-input");
+    const categoryErrorDiv = document.getElementById("category-error");
+
+    const syrupListDiv = document.getElementById("syrup-list");
+    const syrupForm = document.getElementById("syrup-form");
+    const syrupNameInput = document.getElementById("syrup-name-input");
+
+    const drinkSelect = document.getElementById("drink-select");
+    const milkSelect = document.getElementById("milk-select");
+    const ordersList = document.getElementById("orders");
+    const manualOrderForm = document.getElementById("order-form");
+    const customerNameInput = document.getElementById("customer-name");
+
+    let menus = [];
+    let currentMenuId = null;
+    let drinks = [];
+    let categories = [];
+    let syrups = [];
+    let orders = [];
+
+    // Category-based presets for milk options
+    const categoryPresets = {
+      Coffee: {
+        milks: "Whole, Skim, Oat, Almond"
+      },
+      Tea: {
+        milks: "Black, With milk"
+      },
+      Alcohol: {
+        milks: ""
+      }
+    };
+
+    function getCategoryNameById(id) {
+      const cat = categories.find(c => c.id === id);
+      return cat ? cat.name : null;
+    }
+
+    function applyCategoryPresets(categoryId) {
+      const name = getCategoryNameById(categoryId);
+      const preset = name && categoryPresets[name];
+
+      let milksPlaceholder = "Whole, Skim, Oat";
+
+      if (preset && preset.milks !== undefined) {
+        milksPlaceholder = preset.milks || "";
+        if (!drinkMilksInput.value.trim() && preset.milks) {
+          drinkMilksInput.value = preset.milks;
+        }
+      }
+
+      drinkMilksInput.placeholder = milksPlaceholder;
+
+      if (name === "Alcohol") {
+        milksLabel.style.display = "none";
+        drinkMilksInput.value = "";
+      } else {
+        milksLabel.style.display = "block";
+      }
+    }
+
+    // ---------- MENUS ----------
+
+    async function loadMenusFromSupabase() {
+      menuErrorDiv.textContent = "";
+      try {
+        const { data, error } = await supabaseClient
+          .from("menus")
+          .select("*")
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+
+        if (error) {
+          console.error("Error loading menus:", error);
+          menuErrorDiv.textContent = "Could not load menus.";
+          menus = [];
+        } else {
+          menus = data || [];
+        }
+      } catch (e) {
+        console.error("Unexpected error loading menus:", e);
+        menuErrorDiv.textContent = "Unexpected error loading menus.";
+        menus = [];
+      }
+
+      if (!currentMenuId) {
+        const active = menus.find(m => m.is_active);
+        if (active) {
+          currentMenuId = active.id;
+        } else if (menus.length > 0) {
+          currentMenuId = menus[0].id;
+        }
+      }
+
+      renderMenus();
+      renderCurrentMenuSelect();
+      await loadMenuItemsForCurrentMenu();
+    }
+
+    async function addMenuToSupabase(name) {
+      try {
+        const { data, error } = await supabaseClient
+          .from("menus")
+          .insert({
+            name,
+            is_active: menus.length === 0,
+            sort_order: (menus.length + 1) * 10
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Error adding menu:", error);
+          menuErrorDiv.textContent = "Error adding menu: " + (error.message || "");
+          return null;
+        }
+        return data;
+      } catch (e) {
+        console.error("Unexpected error adding menu:", e);
+        menuErrorDiv.textContent = "Unexpected error adding menu.";
+        return null;
+      }
+    }
+
+    async function setMenuActiveInSupabase(id) {
+      try {
+        const { error: clearError } = await supabaseClient
+          .from("menus")
+          .update({ is_active: false })
+          .neq("id", id);
+        if (clearError) {
+          console.error("Error clearing active menu:", clearError);
+        }
+
+        const { data, error } = await supabaseClient
+          .from("menus")
+          .update({ is_active: true })
+          .eq("id", id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Error setting active menu:", error);
+          menuErrorDiv.textContent = "Error setting active menu: " + (error.message || "");
+          return null;
+        }
+        return data;
+      } catch (e) {
+        console.error("Unexpected error setting active menu:", e);
+        menuErrorDiv.textContent = "Unexpected error setting active menu.";
+        return null;
+      }
+    }
+
+    function renderMenus() {
+      menuListDiv.innerHTML = "";
+
+      if (!menus || menus.length === 0) {
+        const p = document.createElement("p");
+        p.className = "empty-text";
+        p.textContent = "No menus configured. Add one above.";
+        menuListDiv.appendChild(p);
+        currentMenuIndicator.textContent = "No menu selected.";
+        return;
+      }
+
+      menus.forEach(menu => {
+        const div = document.createElement("div");
+        div.className = "menu-item";
+
+        const header = document.createElement("div");
+        header.className = "menu-header";
+
+        const nameSpan = document.createElement("div");
+        nameSpan.className = "menu-name";
+        nameSpan.textContent = menu.name + (menu.is_active ? " (active)" : "");
+
+        const actionsDiv = document.createElement("div");
+
+        const setActiveBtn = document.createElement("button");
+        setActiveBtn.type = "button";
+        setActiveBtn.textContent = "Set active";
+
+        setActiveBtn.addEventListener("click", async () => {
+          const updated = await setMenuActiveInSupabase(menu.id);
+          if (!updated) return;
+          menus = menus.map(m =>
+            m.id === updated.id ? updated : { ...m, is_active: false }
+          );
+          renderMenus();
+        });
+
+        actionsDiv.appendChild(setActiveBtn);
+        header.appendChild(nameSpan);
+        header.appendChild(actionsDiv);
+        div.appendChild(header);
+        menuListDiv.appendChild(div);
+      });
+
+      const current = menus.find(m => m.id === currentMenuId);
+      currentMenuIndicator.textContent = current
+        ? `Editing menu: ${current.name}`
+        : "No menu selected.";
+    }
+
+    function renderCurrentMenuSelect() {
+      currentMenuSelect.innerHTML = "";
+
+      if (!menus || menus.length === 0) {
+        const opt = document.createElement("option");
+        opt.textContent = "No menus available";
+        opt.disabled = true;
+        opt.selected = true;
+        currentMenuSelect.appendChild(opt);
+        return;
+      }
+
+      menus.forEach(menu => {
+        const opt = document.createElement("option");
+        opt.value = menu.id;
+        opt.textContent = menu.name + (menu.is_active ? " (active)" : "");
+        currentMenuSelect.appendChild(opt);
+      });
+
+      if (currentMenuId) {
+        currentMenuSelect.value = currentMenuId;
+      } else {
+        currentMenuId = currentMenuSelect.value;
+      }
+
+      const current = menus.find(m => m.id === currentMenuId);
+      currentMenuIndicator.textContent = current
+        ? `Editing menu: ${current.name}`
+        : "No menu selected.";
+    }
+
+    currentMenuSelect.addEventListener("change", async () => {
+      currentMenuId = currentMenuSelect.value;
+      const current = menus.find(m => m.id === currentMenuId);
+      currentMenuIndicator.textContent = current
+        ? `Editing menu: ${current.name}`
+        : "No menu selected.";
+      await loadMenuItemsForCurrentMenu();
+    });
+
+    menuForm.addEventListener("submit", async event => {
+      event.preventDefault();
+
+      const name = menuNameInput.value.trim();
+      if (!name) return;
+
+      const created = await addMenuToSupabase(name);
+      if (!created) return;
+
+      menus.push(created);
+      menuNameInput.value = "";
+      await loadMenusFromSupabase();
+    });
+
+    // ---------- CATEGORIES ----------
+
+    async function loadCategoriesFromSupabase() {
+      categoryErrorDiv.textContent = "";
+      try {
+        const { data, error } = await supabaseClient
+          .from("categories")
+          .select("*")
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+
+        if (error) {
+          console.error("Error loading categories:", error);
+          categoryErrorDiv.textContent = "Could not load categories.";
+          categories = [];
+        } else {
+          categories = data || [];
+        }
+      } catch (e) {
+        console.error("Unexpected error loading categories:", e);
+        categoryErrorDiv.textContent = "Unexpected error loading categories.";
+        categories = [];
+      }
+
+      renderCategories();
+      renderCategorySelect();
+    }
+
+    async function addCategoryToSupabase(name) {
+      try {
+        const { data, error } = await supabaseClient
+          .from("categories")
+          .insert({
+            name,
+            sort_order: (categories.length + 1) * 10
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Error adding category:", error);
+          categoryErrorDiv.textContent = "Error adding category: " + (error.message || "");
+          return null;
+        }
+        return data;
+      } catch (e) {
+        console.error("Unexpected error adding category:", e);
+        categoryErrorDiv.textContent = "Unexpected error adding category.";
+        return null;
+      }
+    }
+
+    async function deleteCategoryFromSupabase(id) {
+      try {
+        const { error } = await supabaseClient
+          .from("categories")
+          .delete()
+          .eq("id", id);
+
+        if (error) {
+          console.error("Error deleting category:", error);
+          categoryErrorDiv.textContent = "Error deleting category: " + (error.message || "");
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.error("Unexpected error deleting category:", e);
+        categoryErrorDiv.textContent = "Unexpected error deleting category.";
+        return false;
+      }
+    }
+
+    function renderCategories() {
+      categoryListDiv.innerHTML = "";
+
+      if (!categories || categories.length === 0) {
+        const p = document.createElement("p");
+        p.className = "empty-text";
+        p.textContent = "No categories configured. Add some above.";
+        categoryListDiv.appendChild(p);
+        return;
+      }
+
+      categories.forEach(cat => {
+        const div = document.createElement("div");
+        div.className = "category-item";
+
+        const header = document.createElement("div");
+        header.className = "category-header";
+
+        const nameSpan = document.createElement("div");
+        nameSpan.className = "category-name";
+        nameSpan.textContent = cat.name;
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.textContent = "Remove";
+
+        deleteBtn.addEventListener("click", async () => {
+          const ok = await deleteCategoryFromSupabase(cat.id);
+          if (!ok) return;
+          categories = categories.filter(c => c.id !== cat.id);
+          renderCategories();
+          renderCategorySelect();
+        });
+
+        header.appendChild(nameSpan);
+        header.appendChild(deleteBtn);
+        div.appendChild(header);
+        categoryListDiv.appendChild(div);
+      });
+    }
+
+    function renderCategorySelect() {
+      categorySelect.innerHTML = "";
+
+      if (!categories || categories.length === 0) {
+        const opt = document.createElement("option");
+        opt.textContent = "No categories available";
+        opt.disabled = true;
+        opt.selected = true;
+        categorySelect.appendChild(opt);
+        return;
+      }
+
+      categories.forEach(cat => {
+        const opt = document.createElement("option");
+        opt.value = cat.id;
+        opt.textContent = cat.name;
+        categorySelect.appendChild(opt);
+      });
+
+      if (categorySelect.value) {
+        applyCategoryPresets(categorySelect.value);
+      }
+    }
+
+    categoryForm.addEventListener("submit", async event => {
+      event.preventDefault();
+
+      const name = categoryNameInput.value.trim();
+      if (!name) return;
+
+      const created = await addCategoryToSupabase(name);
+      if (!created) return;
+
+      categories.push(created);
+      categoryNameInput.value = "";
+      renderCategories();
+      renderCategorySelect();
+    });
+
+    categorySelect.addEventListener("change", () => {
+      const categoryId = categorySelect.value;
+      if (categoryId) {
+        applyCategoryPresets(categoryId);
+      }
+    });
+
+    // ---------- MENU ITEMS (DRINKS) ----------
+
+    async function loadMenuItemsForCurrentMenu() {
+      if (!currentMenuId) {
+        drinks = [];
+        renderMenuItems();
+        renderDrinkDropdown();
+        return;
+      }
+
+      try {
+        const { data, error } = await supabaseClient
+          .from("menu_items")
+          .select("id,name,milks,category_id,category:categories(name)")
+          .eq("menu_id", currentMenuId)
+          .order("created_at", { ascending: true });
+
+        if (error) {
+          console.error("Error loading menu items:", error);
+          drinks = [];
+        } else {
+          drinks = data.map(row => ({
+            id: row.id,
+            name: row.name,
+            milks: row.milks || [],
+            categoryId: row.category_id || null,
+            categoryName: row.category?.name || null
+          }));
+        }
+      } catch (e) {
+        console.error("Unexpected error loading menu items:", e);
+        drinks = [];
+      }
+
+      renderMenuItems();
+      renderDrinkDropdown();
+    }
+
+    async function addMenuItemToSupabase(drink) {
+      drinkErrorDiv.textContent = "";
+      try {
+        const { data, error } = await supabaseClient
+          .from("menu_items")
+          .insert({
+            name: drink.name,
+            milks: drink.milks,
+            category_id: drink.categoryId,
+            menu_id: currentMenuId
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Error adding menu item:", error);
+          drinkErrorDiv.textContent =
+            "Error adding drink: " + (error.message || "");
+          return null;
+        }
+        return data;
+      } catch (e) {
+        console.error("Unexpected error adding menu item:", e);
+        drinkErrorDiv.textContent = "Unexpected error adding drink.";
+        return null;
+      }
+    }
+
+    async function deleteMenuItemFromSupabase(id) {
+      try {
+        const { error } = await supabaseClient
+          .from("menu_items")
+          .delete()
+          .eq("id", id);
+
+        if (error) {
+          console.error("Error deleting menu item:", error);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.error("Unexpected error deleting menu item:", e);
+        return false;
+      }
+    }
+
+    function renderMenuItems() {
+      menuItemsDiv.innerHTML = "";
+
+      if (!currentMenuId) {
+        const p = document.createElement("p");
+        p.className = "empty-text";
+        p.textContent = "No menu selected.";
+        menuItemsDiv.appendChild(p);
+        return;
+      }
+
+      if (!drinks || drinks.length === 0) {
+        const p = document.createElement("p");
+        p.className = "empty-text";
+        p.textContent = "No drinks on this menu yet. Add some above.";
+        menuItemsDiv.appendChild(p);
+        return;
+      }
+
+      drinks.forEach(drink => {
+        const div = document.createElement("div");
+        div.className = "drink";
+
+        const header = document.createElement("div");
+        header.className = "drink-header";
+
+        const title = document.createElement("div");
+        title.className = "drink-name";
+        title.textContent = drink.name;
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.textContent = "Remove";
+
+        deleteBtn.addEventListener("click", async () => {
+          const ok = await deleteMenuItemFromSupabase(drink.id);
+          if (!ok) return;
+          drinks = drinks.filter(d => d.id !== drink.id);
+          renderMenuItems();
+          renderDrinkDropdown();
+        });
+
+        header.appendChild(title);
+        header.appendChild(deleteBtn);
+
+        const details = document.createElement("div");
+        details.innerHTML = `
+          <div>Category: ${drink.categoryName || "Uncategorised"}</div>
+          <div>Milk options: ${drink.milks.join(", ") || "None"}</div>
+        `;
+
+        div.appendChild(header);
+        div.appendChild(details);
+        menuItemsDiv.appendChild(div);
+      });
+    }
+
+    drinkForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      drinkErrorDiv.textContent = "";
+
+      if (!currentMenuId) {
+        drinkErrorDiv.textContent = "No menu selected. Choose a menu first.";
+        return;
+      }
+
+      const name = drinkNameInput.value.trim();
+      const categoryId = categorySelect.value;
+
+      if (!name) {
+        drinkErrorDiv.textContent = "Enter a drink name.";
+        return;
+      }
+      if (!categoryId || categorySelect.options.length === 0) {
+        drinkErrorDiv.textContent = "Select a category or create one.";
+        return;
+      }
+
+      const milks = drinkMilksInput.value
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      const categoryName = getCategoryNameById(categoryId);
+
+      const newDrink = {
+        name,
+        categoryId,
+        categoryName,
+        milks: milks.length ? milks : []
+      };
+
+      const created = await addMenuItemToSupabase(newDrink);
+      if (!created) {
+        // error already shown
+        return;
+      }
+
+      drinks.push({
+        id: created.id,
+        name: created.name,
+        milks: created.milks || [],
+        categoryId: created.category_id || newDrink.categoryId,
+        categoryName: newDrink.categoryName
+      });
+
+      drinkNameInput.value = "";
+      drinkMilksInput.value = "";
+
+      renderMenuItems();
+      renderDrinkDropdown();
+    });
+
+    // ---------- SYRUPS ----------
+
+    async function loadSyrupsFromSupabase() {
+      try {
+        const { data, error } = await supabaseClient
+          .from("syrups")
+          .select("*")
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+
+        if (error) {
+          console.error("Error loading syrups:", error);
+          syrups = [];
+        } else {
+          syrups = data || [];
+        }
+      } catch (e) {
+        console.error("Unexpected error loading syrups:", e);
+        syrups = [];
+      }
+
+      renderSyrups();
+    }
+
+    async function addSyrupToSupabase(name) {
+      try {
+        const { data, error } = await supabaseClient
+          .from("syrups")
+          .insert({
+            name,
+            active: true
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Error adding syrup:", error);
+          return null;
+        }
+        return data;
+      } catch (e) {
+        console.error("Unexpected error adding syrup:", e);
+        return null;
+      }
+    }
+
+    async function deleteSyrupFromSupabase(id) {
+      try {
+        const { error } = await supabaseClient
+          .from("syrups")
+          .delete()
+          .eq("id", id);
+
+        if (error) {
+          console.error("Error deleting syrup:", error);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.error("Unexpected error deleting syrup:", e);
+        return false;
+      }
+    }
+
+    function renderSyrups() {
+      syrupListDiv.innerHTML = "";
+
+      if (!syrups || syrups.length === 0) {
+        const p = document.createElement("p");
+        p.className = "empty-text";
+        p.textContent = "No syrups configured. Add some above.";
+        syrupListDiv.appendChild(p);
+        return;
+      }
+
+      syrups.forEach(syrup => {
+        const div = document.createElement("div");
+        div.className = "syrup-item";
+
+        const header = document.createElement("div");
+        header.className = "syrup-header";
+
+        const nameSpan = document.createElement("div");
+        nameSpan.className = "syrup-name";
+        nameSpan.textContent =
+          syrup.name + (syrup.active ? "" : " (inactive)");
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.textContent = "Remove";
+
+        deleteBtn.addEventListener("click", async () => {
+          const ok = await deleteSyrupFromSupabase(syrup.id);
+          if (!ok) return;
+          syrups = syrups.filter(s => s.id !== syrup.id);
+          renderSyrups();
+        });
+
+        header.appendChild(nameSpan);
+        header.appendChild(deleteBtn);
+        div.appendChild(header);
+        syrupListDiv.appendChild(div);
+      });
+    }
+
+    syrupForm.addEventListener("submit", async event => {
+      event.preventDefault();
+
+      const name = syrupNameInput.value.trim();
+      if (!name) return;
+
+      const created = await addSyrupToSupabase(name);
+      if (!created) return;
+
+      syrups.push(created);
+      syrupNameInput.value = "";
+      renderSyrups();
+    });
+
+    // ---------- ORDERS ----------
+
+    async function loadOrders() {
+      try {
+        const { data, error } = await supabaseClient
+          .from("orders")
+          .select("*")
+          .order("created_at", { ascending: true });
+
+        if (error) {
+          console.error("Error loading orders:", error);
+          orders = [];
+        } else {
+          orders = data || [];
+        }
+      } catch (e) {
+        console.error("Unexpected error loading orders:", e);
+        orders = [];
+      }
+      renderOrders();
+    }
+
+    async function createOrderInSupabase(orderPayload) {
+      try {
+        const { data, error } = await supabaseClient
+          .from("orders")
+          .insert(orderPayload)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Error creating order:", error);
+          return null;
+        }
+        return data;
+      } catch (e) {
+        console.error("Unexpected error creating order:", e);
+        return null;
+      }
+    }
+
+    async function deleteOrderFromSupabase(id) {
+      try {
+        const { error } = await supabaseClient
+          .from("orders")
+          .delete()
+          .eq("id", id);
+
+        if (error) {
+          console.error("Error deleting order:", error);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.error("Unexpected error deleting order:", e);
+        return false;
+      }
+    }
+
+    function renderDrinkDropdown() {
+      drinkSelect.innerHTML = "";
+      milkSelect.innerHTML = "";
+
+      if (!drinks || drinks.length === 0) {
+        const opt = document.createElement("option");
+        opt.textContent = "No drinks available";
+        opt.disabled = true;
+        opt.selected = true;
+        drinkSelect.appendChild(opt);
+        return;
+      }
+
+      drinks.forEach((drink, index) => {
+        const opt = document.createElement("option");
+        opt.value = index;
+        opt.textContent = drink.name;
+        drinkSelect.appendChild(opt);
+      });
+
+      updateMilkOptionsForDrink(0);
+    }
+
+    function updateMilkOptionsForDrink(drinkIndex) {
+      const drink = drinks[drinkIndex];
+      milkSelect.innerHTML = "";
+
+      if (!drink) return;
+
+      (drink.milks || []).forEach(milk => {
+        const opt = document.createElement("option");
+        opt.value = milk;
+        opt.textContent = milk;
+        milkSelect.appendChild(opt);
+      });
+    }
+
+    drinkSelect.addEventListener("change", () => {
+      const idx = Number(drinkSelect.value);
+      updateMilkOptionsForDrink(idx);
+    });
+
+    manualOrderForm.addEventListener("submit", async event => {
+      event.preventDefault();
+
+      if (!drinks || drinks.length === 0) return;
+
+      const drinkIndex = Number(drinkSelect.value);
+      const drink = drinks[drinkIndex];
+      if (!drink) return;
+
+      const customerName = customerNameInput.value.trim();
+      const selectedMilk = milkSelect.value || null;
+
+      if (!customerName) return;
+
+      const payload = {
+        customer_name: customerName,
+        drink: drink.name,
+        size: null,
+        milk: selectedMilk,
+        syrup: false,
+        syrup_flavour: null,
+        iced: false,
+        notes: null
+      };
+
+      const created = await createOrderInSupabase(payload);
+      if (!created) return;
+
+      orders.push(created);
+      customerNameInput.value = "";
+      renderOrders();
+    });
+
+    function renderOrders() {
+      ordersList.innerHTML = "";
+
+      if (!orders || orders.length === 0) {
+        const li = document.createElement("li");
+        li.className = "empty-text";
+        li.textContent = "No active orders.";
+        ordersList.appendChild(li);
+        return;
+      }
+
+      orders.forEach(order => {
+        const li = document.createElement("li");
+
+        const flags = [];
+        if (order.iced) {
+          flags.push("Iced");
+        }
+        if (order.syrup) {
+          if (order.syrup_flavour) {
+            flags.push(`Syrup: ${order.syrup_flavour}`);
+          } else {
+            flags.push("Syrup");
+          }
+        }
+        if (order.notes) {
+          flags.push(`Notes: ${order.notes}`);
+        }
+        const flagsText = flags.length ? " • " + flags.join(" | ") : "";
+
+        const textSpan = document.createElement("span");
+        textSpan.className = "order-text";
+        textSpan.textContent = `${order.customer_name} – ${order.drink} (${order.milk || "no milk"})${flagsText}`;
+
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = "order-actions";
+
+        const doneButton = document.createElement("button");
+        doneButton.type = "button";
+        doneButton.textContent = "Done";
+
+        doneButton.addEventListener("click", async () => {
+          const ok = await deleteOrderFromSupabase(order.id);
+          if (!ok) return;
+          orders = orders.filter(o => o.id !== order.id);
+          renderOrders();
+        });
+
+        actionsDiv.appendChild(doneButton);
+        li.appendChild(textSpan);
+        li.appendChild(actionsDiv);
+        ordersList.appendChild(li);
+      });
+    }
+
+    // ---------- init ----------
+    (async () => {
+      await loadMenusFromSupabase();
+      await Promise.all([
+        loadCategoriesFromSupabase(),
+        loadSyrupsFromSupabase(),
+        loadOrders()
+      ]);
+      setInterval(loadOrders, 5000);
+    })();
+  </script>
+</body>
+</html>
