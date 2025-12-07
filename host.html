@@ -682,18 +682,19 @@
       }
 
       async function fetchSyrups() {
-        const { data, error } = await supabaseClient
-          .from("syrups")
-          .select("*, menus(name)")
-          .order("name", { ascending: true });
+  const { data, error } = await supabaseClient
+    .from("syrups")
+    .select("*")                      // <- simplified
+    .order("name", { ascending: true });
 
-        if (error) {
-          console.error("Error fetching syrups:", error);
-          return [];
-        }
-        console.log("Host syrups:", data);
-        return data || [];
-      }
+  if (error) {
+    console.error("Error fetching syrups:", error);
+    return [];
+  }
+  console.log("Host syrups:", data);
+  return data || [];
+}
+
 
       async function fetchOrders(menuId, statusFilter) {
         let query = supabaseClient
@@ -1067,11 +1068,20 @@
         });
       }
 
-      async function refreshDrinks() {
-        drinksCache = await fetchDrinks();
-        renderDrinksTable();
-        await refreshManualOrderDrinks();
-      }
+async function fetchDrinks() {
+  const { data, error } = await supabaseClient
+    .from("drinks")
+    .select("*")                      // ditch the categories join
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching drinks:", error);
+    return [];
+  }
+  console.log("Host drinks:", data);
+  return data || [];
+}
+
 
       // === Categories ===
       function renderCategoriesTable() {
