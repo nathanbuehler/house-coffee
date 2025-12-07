@@ -1723,4 +1723,282 @@
         });
       }
 
-      async function refreshManualOrderMenus(
+      async function refreshManualOrderMenus() {
+        manualMenuSelect.innerHTML = "";
+
+        if (!menusCache || menusCache.length === 0) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "No menus available";
+          manualMenuSelect.appendChild(opt);
+          manualMenuSelect.disabled = true;
+          return;
+        }
+
+        manualMenuSelect.disabled = false;
+
+        menusCache.forEach((m) => {
+          const opt = document.createElement("option");
+          opt.value = m.id;
+          opt.textContent = m.name || "Untitled menu";
+          manualMenuSelect.appendChild(opt);
+        });
+      }
+
+      async function refreshManualOrderDrinks() {
+        manualDrinkSelect.innerHTML = "";
+
+        if (!drinksCache || drinksCache.length === 0) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "No drinks available";
+          manualDrinkSelect.appendChild(opt);
+          manualDrinkSelect.disabled = true;
+          return;
+        }
+
+        manualDrinkSelect.disabled = false;
+
+        const drinksSorted = [...drinksCache].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
+
+        drinksSorted.forEach((d) => {
+          const opt = document.createElement("option");
+          opt.value = d.id;
+          opt.textContent = d.name || "Unnamed drink";
+          manualDrinkSelect.appendChild(opt);
+        });
+      }
+
+      async function refreshManualSyrups() {
+        manualSyrupFlavourSelect.innerHTML = "";
+
+        if (!syrupsCache || syrupsCache.length === 0) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "No syrups available";
+          manualSyrupFlavourSelect.appendChild(opt);
+          manualSyrupFlavourSelect.disabled = true;
+          return;
+        }
+
+        manualSyrupFlavourSelect.disabled = false;
+
+        const menuId = manualMenuSelect.value || null;
+
+        let filtered = syrupsCache;
+        if (menuId) {
+          filtered = syrupsCache.filter(
+            (s) => !s.menu_id || s.menu_id === menuId
+          );
+        }
+
+        const defaultOpt = document.createElement("option");
+        defaultOpt.value = "";
+        defaultOpt.textContent = "Select a flavour";
+        manualSyrupFlavourSelect.appendChild(defaultOpt);
+
+        filtered.forEach((s) => {
+          const opt = document.createElement("option");
+          opt.value = s.name;
+          opt.textContent = s.name;
+          manualSyrupFlavourSelect.appendChild(opt);
+        });
+      }
+
+      function handleManualSyrupChoiceChange() {
+        const selected = Array.from(manualSyrupChoiceRadios).find(
+          (r) => r.checked
+        );
+        if (!selected) return;
+
+        if (selected.value === "yes") {
+          manualSyrupFlavourGroup.style.display = "block";
+        } else {
+          manualSyrupFlavourGroup.style.display = "none";
+          manualSyrupFlavourSelect.value = "";
+        }
+      }
+
+      manualSyrupChoiceRadios.forEach((radio) => {
+        radio.addEventListener("change", handleManualSyrupChoiceChange);
+      });
+
+      manualMenuSelect.addEventListener("change", async () => {
+        await refreshManualSyrups();
+      });
+
+      async function handleManualOrderSubmit(e) {
+        e.preventDefault();
+        setStatus(manualOrderStatus, "", false);
+
+        if (!menusCache || menusCache.length === 0) {
+          setStatus(manualOrderStatus, "No menus configured.", true);
+          return;
+        }
+
+        const menuId = manualMenuSelect.value;
+        const drinkId = manualDrinkSelect.value;
+        const customerName = manualCustomerName.value.trim();
+        const milk = manualMilkSelect.value || null;
+        const syrupChoice = Array.from(manualSyrupChoiceRadios).find(
+          (r) => r.checked
+        )?.value;
+        const icedChoice = Array.from(manualIcedChoiceRadios).find(
+          (r) => r.checked
+        )?.value;
+        const syrupFlavour =
+          syrupChoice === "yes"
+            ? manualSyrupFlavourSelect.value || null
+            : null;
+        const notes = manualNotes.value.trim() || null;
+
+        if (!menuId) {
+          setStatus(manualOrderStatus, "Select a menu.", true);
+          return;
+        }
+        if (!drinkId) {
+          setStatus(manualOrderStatus, "Select a drink.", true);
+          return;
+        }
+        if (!customerName) {
+          setStatus(manualOrderStatus, "Customer name is required.", true);
+          return;
+        }
+        if (syrupChoice === "yes" && !syrupFlavour) {
+          setStatus(
+            manualOrderStatus,
+            "Select a syrup flavour when syrup is yes.",
+            true
+          );
+          return;
+        }
+
+        const drink = drinksCache.find((d) => d.id === drinkId);
+        if (!drink) {
+          setStatus(
+            manualOrderStatus,
+            "Drink not found. Refresh drinks.",
+            true
+          );
+          return;
+        }
+
+        const payload = {
+          customer_name: customerName,
+          drink: drink.name,
+          milk: selectedMilk = milk,
+          syrup: syrupChoice === "yes",
+          syrup_flavour:
+            syrupChoice === "yes" && syrupFlavour ? syrupFlavour : null,
+          iced: icedChoice === "yes",
+          notes: notes
+        };
+
+        const { error } = await supabaseClient.from("orders").insert([
+          {
+            menu_id: menuId,
+            ...payload
+          }
+        ]);
+
+        if (error) {
+          console.error("Error inserting manual order:", error);
+          setStatus(
+            manualOrderStatus,
+            "Error creating order. See console.",
+            true
+          );
+          return;
+        }
+
+        setStatus(manualOrderStatus, "Manual order added.");
+        manualOrderForm.reset();
+        handleManualSyrupChoiceChange();
+        await refreshOrders();
+      }
+
+      manualOrderForm.addEventListener("submit", handleManualOrderSubmit);
+
+      createMenuBtn.addEventListener("click", () => {
+        renderMenuEditForm({
+          id: null,
+          name: "",
+          description: "",
+          is_default: menusCache.length === 0
+        });
+      });
+
+      refreshMenusBtn.addEventListener("click", refreshMenus);
+
+      createDrinkBtn.addEventListener("click", () => {
+        renderDrinkEditForm({
+          id: null,
+          name: "",
+          category_id: null,
+          description: "",
+          base_price: null
+        });
+      });
+
+      refreshDrinksBtn.addEventListener("click", refreshDrinks);
+
+      createCategoryBtn.addEventListener("click", () => {
+        renderCategoryEditForm({
+          id: null,
+          name: "",
+          sort_order: null
+        });
+      });
+
+      refreshCategoriesBtn.addEventListener("click", refreshCategories);
+
+      createSyrupBtn.addEventListener("click", () => {
+        renderSyrupEditForm({
+          id: null,
+          name: "",
+          menu_id: null,
+          notes: ""
+        });
+      });
+
+      refreshSyrupsBtn.addEventListener("click", refreshSyrups);
+
+      ordersMenuFilter.addEventListener("change", refreshOrders);
+      ordersStatusFilter.addEventListener("change", refreshOrders);
+      refreshOrdersBtn.addEventListener("click", refreshOrders);
+
+      async function init() {
+        menusTableContainer.innerHTML = "<p>Loading menus…</p>";
+        drinksTableContainer.innerHTML = "<p>Loading drinks…</p>";
+        categoriesTableContainer.innerHTML = "<p>Loading categories…</p>";
+        syrupsTableContainer.innerHTML = "<p>Loading syrups…</p>";
+        ordersTableContainer.innerHTML = "<p>Loading orders…</p>";
+
+        categoriesCache = await fetchCategories();
+        renderCategoriesTable();
+
+        menusCache = await fetchMenus();
+        renderMenusTable();
+
+        drinksCache = await fetchDrinks();
+        renderDrinksTable();
+
+        syrupsCache = await fetchSyrups();
+        renderSyrupsTable();
+
+        await refreshMenuFilters();
+        await refreshManualOrderMenus();
+        await refreshManualOrderDrinks();
+        await refreshManualSyrups();
+
+        handleManualSyrupChoiceChange();
+
+        await refreshOrders();
+      }
+
+      init();
+    </script>
+  </body>
+</html>
