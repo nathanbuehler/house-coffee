@@ -841,87 +841,177 @@
         });
       }
 
-      function renderMenu() {
-        menuContainerEl.innerHTML = "";
+function renderMenu() {
+  menuContainerEl.innerHTML = "";
 
-        if (!currentMenu || currentMenuDrinks.length === 0) {
-          menuContainerEl.innerHTML =
-            '<p class="menu-empty-text">This menu has no drinks yet.</p>';
-          return;
+  if (!currentMenu || currentMenuDrinks.length === 0) {
+    menuContainerEl.innerHTML =
+      '<p class="menu-empty-text">This menu has no drinks yet.</p>';
+    return;
+  }
+
+  const grouped = groupDrinksByCategory(currentMenuDrinks);
+
+  const specialsGroups = [];
+  const otherGroups = [];
+
+  for (const [categoryName, group] of grouped) {
+    const nameLower = (categoryName || "").toLowerCase();
+    if (nameLower.includes("special")) {
+      specialsGroups.push([categoryName, group]);
+    } else {
+      otherGroups.push([categoryName, group]);
+    }
+  }
+
+  // Specials at the top, as square cards, always visible
+  if (specialsGroups.length > 0) {
+    const specialsSection = document.createElement("div");
+    specialsSection.className = "specials-section";
+
+    const headerRow = document.createElement("div");
+    headerRow.className = "specials-header";
+
+    const specialsTitle = document.createElement("h3");
+    specialsTitle.className = "specials-title";
+    specialsTitle.textContent = "Specials";
+
+    const specialsBadge = document.createElement("span");
+    specialsBadge.className = "specials-badge";
+    specialsBadge.textContent = "Featured";
+
+    headerRow.appendChild(specialsTitle);
+    headerRow.appendChild(specialsBadge);
+
+    const specialsGrid = document.createElement("div");
+    specialsGrid.className = "specials-grid";
+
+    specialsGroups.forEach(([categoryName, group]) => {
+      const items = group.items || [];
+      items.forEach((drink) => {
+        const card = document.createElement("div");
+        card.className = "special-card";
+
+        const topRow = document.createElement("div");
+        topRow.className = "special-card-top";
+
+        const catLabel = document.createElement("div");
+        catLabel.className = "special-card-category";
+        catLabel.textContent = categoryName;
+
+        const nameEl = document.createElement("div");
+        nameEl.className = "special-card-name";
+        nameEl.textContent = drink.name;
+
+        topRow.appendChild(catLabel);
+        topRow.appendChild(nameEl);
+
+        const descEl = document.createElement("div");
+        descEl.className = "special-card-description";
+        descEl.textContent = drink.description || "";
+
+        const bottomRow = document.createElement("div");
+        bottomRow.className = "special-card-bottom";
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "btn-special-select";
+        button.textContent = "Select";
+        button.onclick = () => {
+          drinkSelectEl.value = drink.id;
+        };
+
+        bottomRow.appendChild(button);
+
+        card.appendChild(topRow);
+        if (drink.description) {
+          card.appendChild(descEl);
         }
+        card.appendChild(bottomRow);
 
-        const grouped = groupDrinksByCategory(currentMenuDrinks);
+        specialsGrid.appendChild(card);
+      });
+    });
 
-        for (const [categoryName, group] of grouped) {
-          const items = group.items;
+    specialsSection.appendChild(headerRow);
+    specialsSection.appendChild(specialsGrid);
+    menuContainerEl.appendChild(specialsSection);
+  }
 
-          const categoryDiv = document.createElement("div");
-          categoryDiv.className = "menu-category collapsed"; // default collapsed
+  // Normal categories below (collapsed by default, no specials duplicated)
+  const categoriesToRender = otherGroups;
 
-          const header = document.createElement("div");
-          header.className = "menu-category-header";
+  for (const [categoryName, group] of categoriesToRender) {
+    const items = group.items || [];
 
-          const title = document.createElement("h3");
-          title.className = "menu-category-title";
-          title.textContent = categoryName;
+    const categoryDiv = document.createElement("div");
+    categoryDiv.className = "menu-category collapsed"; // default collapsed
 
-          const chevron = document.createElement("span");
-          chevron.className = "menu-category-chevron";
-          chevron.textContent = "▸";
+    const header = document.createElement("div");
+    header.className = "menu-category-header";
 
-          header.appendChild(title);
-          header.appendChild(chevron);
+    const title = document.createElement("h3");
+    title.className = "menu-category-title";
+    title.textContent = categoryName;
 
-          const drinksContainer = document.createElement("div");
-          drinksContainer.className = "menu-drinks-container";
+    const chevron = document.createElement("span");
+    chevron.className = "menu-category-chevron";
+    chevron.textContent = "▸";
 
-          items.forEach((drink) => {
-            const card = document.createElement("div");
-            card.className = "drink-card";
+    header.appendChild(title);
+    header.appendChild(chevron);
 
-            const infoDiv = document.createElement("div");
-            infoDiv.className = "drink-info";
+    const drinksContainer = document.createElement("div");
+    drinksContainer.className = "menu-drinks-container";
 
-            const nameDiv = document.createElement("div");
-            nameDiv.className = "drink-name";
-            nameDiv.textContent = drink.name;
+    items.forEach((drink) => {
+      const card = document.createElement("div");
+      card.className = "drink-card";
 
-            const descriptionDiv = document.createElement("div");
-            descriptionDiv.className = "drink-description";
-            descriptionDiv.textContent = drink.description || "";
+      const infoDiv = document.createElement("div");
+      infoDiv.className = "drink-info";
 
-            infoDiv.appendChild(nameDiv);
-            if (drink.description) infoDiv.appendChild(descriptionDiv);
+      const nameDiv = document.createElement("div");
+      nameDiv.className = "drink-name";
+      nameDiv.textContent = drink.name;
 
-            const actionsDiv = document.createElement("div");
-            actionsDiv.className = "drink-actions";
+      const descriptionDiv = document.createElement("div");
+      descriptionDiv.className = "drink-description";
+      descriptionDiv.textContent = drink.description || "";
 
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = "btn-select";
-            button.textContent = "Select";
-            button.onclick = () => {
-              drinkSelectEl.value = drink.id;
-            };
+      infoDiv.appendChild(nameDiv);
+      if (drink.description) infoDiv.appendChild(descriptionDiv);
 
-            actionsDiv.appendChild(button);
+      const actionsDiv = document.createElement("div");
+      actionsDiv.className = "drink-actions";
 
-            card.appendChild(infoDiv);
-            card.appendChild(actionsDiv);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "btn-select";
+      button.textContent = "Select";
+      button.onclick = () => {
+        drinkSelectEl.value = drink.id;
+      };
 
-            drinksContainer.appendChild(card);
-          });
+      actionsDiv.appendChild(button);
 
-          header.addEventListener("click", () => {
-            const isCollapsed = categoryDiv.classList.toggle("collapsed");
-            chevron.textContent = isCollapsed ? "▸" : "▾";
-          });
+      card.appendChild(infoDiv);
+      card.appendChild(actionsDiv);
 
-          categoryDiv.appendChild(header);
-          categoryDiv.appendChild(drinksContainer);
-          menuContainerEl.appendChild(categoryDiv);
-        }
-      }
+      drinksContainer.appendChild(card);
+    });
+
+    header.addEventListener("click", () => {
+      const isCollapsed = categoryDiv.classList.toggle("collapsed");
+      chevron.textContent = isCollapsed ? "▸" : "▾";
+    });
+
+    categoryDiv.appendChild(header);
+    categoryDiv.appendChild(drinksContainer);
+    menuContainerEl.appendChild(categoryDiv);
+  }
+}
+
 
       function renderDrinkSelect() {
         drinkSelectEl.innerHTML = "";
