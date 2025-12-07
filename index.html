@@ -459,7 +459,7 @@
       async function fetchMenuItems(menuId) {
         const { data, error } = await supabaseClient
           .from("menu_items")
-          .select("*, drinks!inner(name, description, base_price, category)")
+          .select("*, drinks!inner(name, description, category)")
           .eq("menu_id", menuId)
           .order("sort_order", { ascending: true });
 
@@ -537,13 +537,6 @@
             const descriptionDiv = document.createElement("div");
             descriptionDiv.className = "drink-description";
             descriptionDiv.textContent = drink.description || "";
-
-            const priceDiv = document.createElement("div");
-            priceDiv.className = "drink-price";
-            priceDiv.textContent =
-              drink.base_price != null
-                ? `$${Number(drink.base_price).toFixed(2)}`
-                : "Price TBD";
 
             infoDiv.appendChild(nameDiv);
             if (drink.description) infoDiv.appendChild(descriptionDiv);
