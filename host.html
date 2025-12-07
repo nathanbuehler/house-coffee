@@ -602,15 +602,29 @@
       </div>
     </main>
 
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script>
-      // Hard-coded Supabase credentials
-      const SUPABASE_URL = "https://cyfdiuyjzcrommxldpwp.supabase.co";
-      const SUPABASE_KEY = "sb_publishable_hzG6hrSF4DBFz9FrGC-Ghw_MSbQCHFo";
+</main>
 
-      const supabaseClient = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+  // Hard-coded Supabase credentials
+  const SUPABASE_URL = "https://cyfdiuyjzcrommxldpwp.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_hzG6hrSF4DBFz9FrGC-Ghw_MSbQCHFo";
+
+  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Auth-related DOM refs
+  const authSection   = document.getElementById("auth-section");
+  const appWrapper    = document.getElementById("app-wrapper");
+  const loginForm     = document.getElementById("login-form");
+  const loginEmail    = document.getElementById("login-email");
+  const loginPassword = document.getElementById("login-password");
+  const loginStatus   = document.getElementById("login-status");
+  const logoutBtn     = document.getElementById("logout-btn");
+
+  // ...leave *all the rest* of your JS exactly as it is...
+</script>
+
       );
 
       // Auth-related DOM refs
