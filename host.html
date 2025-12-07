@@ -269,7 +269,7 @@
         color: #b45309;
       }
 
-      /* NEW: collapsible drinks section */
+      /* collapsible drinks section */
       #drinks-section.collapsed #drinks-table-container,
       #drinks-section.collapsed #drink-edit-form-container {
         display: none;
@@ -308,7 +308,7 @@
           <div>
             <h2>Host login</h2>
             <div class="small-note">
-              Sign in with your Supabase email & password to manage orders.
+              Sign in with your Supabase email &amp; password to manage orders.
             </div>
           </div>
         </div>
@@ -602,30 +602,14 @@
       </div>
     </main>
 
-</main>
+    <script type="module">
+      import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-<script type="module">
-  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+      // Hard-coded Supabase credentials
+      const SUPABASE_URL = "https://cyfdiuyjzcrommxldpwp.supabase.co";
+      const SUPABASE_KEY = "sb_publishable_hzG6hrSF4DBFz9FrGC-Ghw_MSbQCHFo";
 
-  // Hard-coded Supabase credentials
-  const SUPABASE_URL = "https://cyfdiuyjzcrommxldpwp.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_hzG6hrSF4DBFz9FrGC-Ghw_MSbQCHFo";
-
-  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  // Auth-related DOM refs
-  const authSection   = document.getElementById("auth-section");
-  const appWrapper    = document.getElementById("app-wrapper");
-  const loginForm     = document.getElementById("login-form");
-  const loginEmail    = document.getElementById("login-email");
-  const loginPassword = document.getElementById("login-password");
-  const loginStatus   = document.getElementById("login-status");
-  const logoutBtn     = document.getElementById("logout-btn");
-
-  // ...leave *all the rest* of your JS exactly as it is...
-</script>
-
-      );
+      const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
       // Auth-related DOM refs
       const authSection   = document.getElementById("auth-section");
@@ -657,7 +641,7 @@
       const createDrinkBtn = document.getElementById("create-drink-btn");
       const refreshDrinksBtn = document.getElementById("refresh-drinks-btn");
 
-      // NEW: collapsible drinks section refs
+      // collapsible drinks section refs
       const drinksSection = document.getElementById("drinks-section");
       const toggleDrinksBtn = document.getElementById("toggle-drinks-btn");
 
@@ -1875,7 +1859,7 @@
 
       refreshDrinksBtn.addEventListener("click", refreshDrinks);
 
-      // NEW: collapse / expand drinks
+      // collapse / expand drinks
       if (toggleDrinksBtn && drinksSection) {
         toggleDrinksBtn.addEventListener("click", () => {
           const isCollapsed = drinksSection.classList.toggle("collapsed");
