@@ -1023,18 +1023,23 @@
           e.preventDefault();
           setStatus(statusEl, "Saving…");
 
-          const payload = {
-            id: drink.id,
-            name: nameInput.value.trim(),
-            category_id: catSelect.value || null,
-            description: descInput.value.trim()
-          };
+const payload = {
+  name: nameInput.value.trim(),
+  category_id: catSelect.value || null,
+  description: descInput.value.trim()
+};
 
-          const { data, error } = await supabaseClient
-            .from("drinks")
-            .upsert(payload)
-            .select()
-            .single();
+// Only send id if this is an existing drink
+if (drink.id) {
+  payload.id = drink.id;
+}
+
+const { data, error } = await supabaseClient
+  .from("drinks")
+  .upsert(payload)
+  .select()
+  .single();
+
 
           if (error) {
             console.error("Error saving drink:", error);
@@ -1192,12 +1197,16 @@
           e.preventDefault();
           setStatus(statusEl, "Saving…");
 
-          const payload = {
-            id: category.id,
-            name: nameInput.value.trim(),
-            sort_order:
-              sortInput.value === "" ? null : Number(sortInput.value)
-          };
+const payload = {
+  name: nameInput.value.trim(),
+  sort_order:
+    sortInput.value === "" ? null : Number(sortInput.value)
+};
+
+if (category.id) {
+  payload.id = category.id;
+}
+;
 
           const { data, error } = await supabaseClient
             .from("categories")
@@ -1390,12 +1399,16 @@
           e.preventDefault();
           setStatus(statusEl, "Saving…");
 
-          const payload = {
-            id: syrup.id,
-            name: nameInput.value.trim(),
-            menu_id: menuSelect.value || null,
-            notes: notesInput.value.trim()
-          };
+const payload = {
+  name: nameInput.value.trim(),
+  menu_id: menuSelect.value || null,
+  notes: notesInput.value.trim()
+};
+
+if (syrup.id) {
+  payload.id = syrup.id;
+}
+
 
           const { data, error } = await supabaseClient
             .from("syrups")
