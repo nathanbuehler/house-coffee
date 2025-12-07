@@ -548,8 +548,9 @@
         const grouped = groupDrinksByCategory(currentMenuDrinks);
 
         for (const [categoryName, items] of Object.entries(grouped)) {
-          const categoryDiv = document.createElement("div");
-          categoryDiv.className = "menu-category"; // default expanded
+const categoryDiv = document.createElement("div");
+categoryDiv.className = "menu-category collapsed"; // default collapsed
+
 
           // Header (clickable)
           const header = document.createElement("div");
@@ -559,9 +560,10 @@
           title.className = "menu-category-title";
           title.textContent = categoryName;
 
-          const chevron = document.createElement("span");
-          chevron.className = "menu-category-chevron";
-          chevron.textContent = "▾";
+const chevron = document.createElement("span");
+chevron.className = "menu-category-chevron";
+chevron.textContent = "▸";
+
 
           header.appendChild(title);
           header.appendChild(chevron);
