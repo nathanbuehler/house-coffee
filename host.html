@@ -926,11 +926,6 @@
               <td>${d.name || ""}</td>
               <td>${catName}</td>
               <td>${d.description || ""}</td>
-              <td>${
-                d.base_price != null
-                  ? `$${Number(d.base_price).toFixed(2)}`
-                  : ""
-              }</td>
               <td>
                 <button type="button" class="btn-secondary btn-small" data-action="edit-drink" data-id="${
                   d.id
@@ -1035,8 +1030,6 @@
             name: nameInput.value.trim(),
             category_id: catSelect.value || null,
             description: descInput.value.trim() || null,
-            base_price:
-              priceInput.value !== "" ? Number(priceInput.value) : null
           };
 
           if (!payload.name) {
@@ -1752,17 +1745,6 @@
           name: "",
           description: "",
           is_default: menusCache.length === 0
-        })
-      );
-      refreshMenusBtn.addEventListener("click", refreshMenus);
-
-      createDrinkBtn.addEventListener("click", () =>
-        renderDrinkEditForm({
-          id: null,
-          name: "",
-          category_id: null,
-          description: "",
-          base_price: null
         })
       );
       refreshDrinksBtn.addEventListener("click", refreshDrinks);
