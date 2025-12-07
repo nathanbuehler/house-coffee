@@ -102,17 +102,46 @@
         color: #555;
       }
 
+      /* Category container & collapsible styling */
       .menu-category {
-        margin-top: 1rem;
+        margin-top: 0.75rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #fff;
       }
 
-      .menu-category h3 {
-        margin: 0 0 0.25rem 0;
-        font-size: 1rem;
+      .menu-category-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.45rem 0.6rem;
+        cursor: pointer;
+        background: #f3f4f6;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .menu-category-header:hover {
+        background: #e5e7eb;
+      }
+
+      .menu-category-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      .menu-category-chevron {
+        font-size: 0.85rem;
+        opacity: 0.7;
       }
 
       .menu-drinks-container {
-        margin-top: 0.5rem;
+        padding: 0.4rem 0.6rem 0.6rem;
+      }
+
+      .menu-category.collapsed .menu-drinks-container {
+        display: none;
       }
 
       .drink-card {
@@ -426,31 +455,20 @@
       const menuStatusEl = document.getElementById("menu-status");
       const menuContainerEl = document.getElementById("menu-container");
       const menuTitleEl = document.getElementById("menu-title");
-      const menuDescriptionEl =
-        document.getElementById("menu-description");
-      const menuLastUpdatedEl =
-        document.getElementById("menu-last-updated");
+      const menuDescriptionEl = document.getElementById("menu-description");
+      const menuLastUpdatedEl = document.getElementById("menu-last-updated");
 
       const orderForm = document.getElementById("order-form");
-      const customerNameInput =
-        document.getElementById("customer-name-input");
+      const customerNameInput = document.getElementById("customer-name-input");
       const drinkSelectEl = document.getElementById("drink-select");
       const milkSelect = document.getElementById("milk-select");
-      const syrupFlavourSelect = document.getElementById(
-        "syrup-flavour-select"
-      );
+      const syrupFlavourSelect = document.getElementById("syrup-flavour-select");
       const notesInput = document.getElementById("notes-input");
-      const submitOrderBtn =
-        document.getElementById("submit-order-btn");
-      const statusMessageEl =
-        document.getElementById("status-message");
+      const submitOrderBtn = document.getElementById("submit-order-btn");
+      const statusMessageEl = document.getElementById("status-message");
 
-      const syrupChoiceRadios = document.querySelectorAll(
-        'input[name="syrup"]'
-      );
-      const icedChoiceRadios = document.querySelectorAll(
-        'input[name="iced"]'
-      );
+      const syrupChoiceRadios = document.querySelectorAll('input[name="syrup"]');
+      const icedChoiceRadios = document.querySelectorAll('input[name="iced"]');
 
       let currentMenu = null;
       let currentMenuDrinks = [];
@@ -474,14 +492,11 @@
           return [];
         }
 
-        console.log("Menus fetched:", data);
         return data || [];
       }
 
       async function fetchMenuItems(menuId) {
         // For now, we load drinks directly from the drinks table.
-        // Menus currently don't have a dedicated join table, so the menuId
-        // is not used to filter. All drinks are shown for any menu.
         const { data, error } = await supabaseClient
           .from("drinks")
           .select("*, categories(name)")
@@ -492,7 +507,6 @@
           return [];
         }
 
-        console.log("Drinks fetched for menu:", menuId, data);
         return data || [];
       }
 
@@ -508,7 +522,6 @@
           return [];
         }
 
-        console.log("Syrups fetched:", data);
         return data || [];
       }
 
@@ -536,12 +549,24 @@
 
         for (const [categoryName, items] of Object.entries(grouped)) {
           const categoryDiv = document.createElement("div");
-          categoryDiv.className = "menu-category";
+          categoryDiv.className = "menu-category"; // default expanded
 
-          const h3 = document.createElement("h3");
-          h3.textContent = categoryName;
-          categoryDiv.appendChild(h3);
+          // Header (clickable)
+          const header = document.createElement("div");
+          header.className = "menu-category-header";
 
+          const title = document.createElement("h3");
+          title.className = "menu-category-title";
+          title.textContent = categoryName;
+
+          const chevron = document.createElement("span");
+          chevron.className = "menu-category-chevron";
+          chevron.textContent = "▾";
+
+          header.appendChild(title);
+          header.appendChild(chevron);
+
+          // Container for drinks
           const drinksContainer = document.createElement("div");
           drinksContainer.className = "menu-drinks-container";
 
@@ -568,6 +593,7 @@
 
             const button = document.createElement("button");
             button.type = "button";
+            button.className = "btn-select";
             button.textContent = "Select";
             button.onclick = () => {
               drinkSelectEl.value = drink.id;
@@ -581,6 +607,13 @@
             drinksContainer.appendChild(card);
           });
 
+          // Toggle behaviour
+          header.addEventListener("click", () => {
+            const isCollapsed = categoryDiv.classList.toggle("collapsed");
+            chevron.textContent = isCollapsed ? "▸" : "▾";
+          });
+
+          categoryDiv.appendChild(header);
           categoryDiv.appendChild(drinksContainer);
           menuContainerEl.appendChild(categoryDiv);
         }
@@ -786,10 +819,8 @@
 
           orderForm.reset();
           // Reset defaults (hot, no syrup)
-          document.querySelector('input[name="iced"][value="no"]').checked =
-            true;
-          document.querySelector('input[name="syrup"][value="no"]').checked =
-            true;
+          document.querySelector('input[name="iced"][value="no"]').checked = true;
+          document.querySelector('input[name="syrup"][value="no"]').checked = true;
           handleSyrupChoiceChange();
 
           setStatus("Order submitted successfully!", false, true);
