@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Coffee Host | Nathan | Supabase</title>
+    <title>Coffee Host | Nathan</title>
     <style>
       body {
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -110,16 +110,6 @@
         font-size: 0.8rem;
         padding: 0.3rem 0.6rem;
       }
-      .flex-row {
-        display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-      }
-      .flex-col {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
       .form-group {
         margin-bottom: 0.75rem;
       }
@@ -127,9 +117,6 @@
         display: block;
         font-weight: 600;
         margin-bottom: 0.25rem;
-      }
-      .inline-field {
-        width: auto;
       }
       .status-message {
         margin-top: 0.5rem;
@@ -140,18 +127,6 @@
       }
       .status-error {
         color: #c53030;
-      }
-      .pill {
-        display: inline-block;
-        padding: 0.1rem 0.4rem;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        background: #edf2f7;
-        color: #4a5568;
-      }
-      .pill-default {
-        background: #3182ce;
-        color: #fff;
       }
       .nav {
         display: flex;
@@ -188,9 +163,11 @@
       .inline-radio-group input[type="radio"] {
         width: auto;
       }
-      .orders-table th,
-      .orders-table td {
-        font-size: 0.85rem;
+      .orders-empty-text {
+        font-size: 0.9rem;
+        color: #777;
+        font-style: italic;
+        margin-top: 0.5rem;
       }
       .orders-filter-row {
         display: flex;
@@ -221,54 +198,6 @@
       .tag-milk {
         background: #c6f6d5;
         color: #2f855a;
-      }
-      .orders-empty-text {
-        font-size: 0.9rem;
-        color: #777;
-        font-style: italic;
-        margin-top: 0.5rem;
-      }
-      .menu-header,
-      .drink-header,
-      .syrup-header,
-      .category-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-      }
-      .menu-header-actions,
-      .drink-header-actions,
-      .syrup-header-actions,
-      .category-header-actions {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-      }
-      .order-actions {
-        display: flex;
-        gap: 0.25rem;
-        flex-wrap: wrap;
-      }
-      .order-actions button,
-      .drink-header button,
-      .syrup-header button,
-      .category-header button,
-      .menu-header button {
-        padding: 4px 8px;
-        font-size: 0.85rem;
-      }
-      .empty-text {
-        color: #777;
-        font-style: italic;
-      }
-      .menu-meta {
-        font-size: 0.8rem;
-        color: #666;
-      }
-      .menu-meta span {
-        margin-right: 0.5rem;
       }
       @media (max-width: 800px) {
         table {
@@ -313,13 +242,16 @@
         </button>
       </div>
 
-      <section class="section" id="menu-management-section">
-        <div class="section-header menu-header">
+      <!-- Menus -->
+      <section class="section">
+        <div class="section-header">
           <div>
             <h2>Menus</h2>
-            <div class="menu-meta" id="menus-meta"></div>
+            <div class="small-note">
+              Create menus and pick which one is default.
+            </div>
           </div>
-          <div class="menu-header-actions">
+          <div>
             <button
               type="button"
               class="btn-primary btn-small"
@@ -338,19 +270,20 @@
         </div>
 
         <div id="menus-table-container"></div>
-
         <div id="menu-edit-form-container" style="margin-top: 1rem;"></div>
       </section>
 
-      <section class="section" id="drinks-management-section">
-        <div class="section-header drink-header">
+      <!-- Drinks -->
+      <section class="section">
+        <div class="section-header">
           <div>
             <h2>Drinks</h2>
             <div class="small-note">
-              Manage base drinks. Use categories to keep the menu tidy.
+              Base drink list used across menus. Categories help group in the
+              guest view.
             </div>
           </div>
-          <div class="drink-header-actions">
+          <div>
             <button
               type="button"
               class="btn-primary btn-small"
@@ -369,19 +302,19 @@
         </div>
 
         <div id="drinks-table-container"></div>
-
         <div id="drink-edit-form-container" style="margin-top: 1rem;"></div>
       </section>
 
-      <section class="section" id="categories-management-section">
-        <div class="section-header category-header">
+      <!-- Categories -->
+      <section class="section">
+        <div class="section-header">
           <div>
             <h2>Categories</h2>
             <div class="small-note">
-              Simple labels like “Coffee”, “Tea”, or “Alcohol” for grouping.
+              Simple labels like “Coffee”, “Tea”, “Alcohol”.
             </div>
           </div>
-          <div class="category-header-actions">
+          <div>
             <button
               type="button"
               class="btn-primary btn-small"
@@ -400,23 +333,23 @@
         </div>
 
         <div id="categories-table-container"></div>
-
         <div
           id="category-edit-form-container"
           style="margin-top: 1rem;"
         ></div>
       </section>
 
-      <section class="section" id="syrups-management-section">
-        <div class="section-header syrup-header">
+      <!-- Syrups -->
+      <section class="section">
+        <div class="section-header">
           <div>
             <h2>Syrups</h2>
             <div class="small-note">
-              These are per-menu so you can have different syrups for different
-              setups.
+              Syrup flavours are tied to menus so each bar setup can be
+              different.
             </div>
           </div>
-          <div class="syrup-header-actions">
+          <div>
             <button
               type="button"
               class="btn-primary btn-small"
@@ -435,17 +368,16 @@
         </div>
 
         <div id="syrups-table-container"></div>
-
         <div id="syrup-edit-form-container" style="margin-top: 1rem;"></div>
       </section>
 
-      <section class="section" id="orders-section">
+      <!-- Orders -->
+      <section class="section">
         <div class="section-header">
           <div>
             <h2>Orders</h2>
             <div class="small-note">
-              Latest orders, filtered by menu. Mark them completed or cleared as
-              needed.
+              Recent orders. Filter by menu/status and mark completed / cancelled.
             </div>
           </div>
           <div>
@@ -478,17 +410,19 @@
         <div id="orders-table-container"></div>
       </section>
 
-      <section class="section" id="quick-order-section">
+      <!-- Quick manual order -->
+      <section class="section">
         <div class="section-header">
-          <h2>Quick manual order</h2>
-          <div class="small-note">
-            For when you’ve already made the drink and just want the log
-            updated.
+          <div>
+            <h2>Quick manual order</h2>
+            <div class="small-note">
+              For when you’ve already made the drink and just want the log.
+            </div>
           </div>
         </div>
 
         <form id="manual-order-form">
-          <div class="flex-row">
+          <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
             <div style="flex: 1 1 200px;">
               <div class="form-group">
                 <label for="manual-menu-select">Menu</label>
@@ -527,7 +461,7 @@
             </div>
           </div>
 
-          <div class="flex-row">
+          <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
             <div style="flex: 1 1 200px;">
               <div class="form-group">
                 <label>Syrup?</label>
@@ -616,11 +550,12 @@
         SUPABASE_URL,
         SUPABASE_ANON_KEY
       );
+      console.log("Host Supabase initialised", SUPABASE_URL);
 
+      // DOM
       const menusTableContainer = document.getElementById(
         "menus-table-container"
       );
-      const menusMetaEl = document.getElementById("menus-meta");
       const menuEditFormContainer = document.getElementById(
         "menu-edit-form-container"
       );
@@ -694,9 +629,16 @@
 
       function setStatus(el, message, isError = false) {
         el.textContent = message || "";
-        el.className = "status-message " + (isError ? "status-error" : "status-success");
+        el.className =
+          "status-message " +
+          (isError
+            ? "status-error"
+            : message
+            ? "status-success"
+            : "");
       }
 
+      // === Fetch helpers ===
       async function fetchMenus() {
         const { data, error } = await supabaseClient
           .from("menus")
@@ -707,6 +649,7 @@
           console.error("Error fetching menus:", error);
           return [];
         }
+        console.log("Host menus:", data);
         return data || [];
       }
 
@@ -720,6 +663,7 @@
           console.error("Error fetching drinks:", error);
           return [];
         }
+        console.log("Host drinks:", data);
         return data || [];
       }
 
@@ -733,6 +677,7 @@
           console.error("Error fetching categories:", error);
           return [];
         }
+        console.log("Host categories:", data);
         return data || [];
       }
 
@@ -746,20 +691,7 @@
           console.error("Error fetching syrups:", error);
           return [];
         }
-        return data || [];
-      }
-
-      async function fetchMenuItems(menuId) {
-        const { data, error } = await supabaseClient
-          .from("menu_items")
-          .select("*, drinks(name)")
-          .eq("menu_id", menuId)
-          .order("sort_order", { ascending: true });
-
-        if (error) {
-          console.error("Error fetching menu_items:", error);
-          return [];
-        }
+        console.log("Host syrups:", data);
         return data || [];
       }
 
@@ -769,32 +701,26 @@
           .select("*")
           .order("created_at", { ascending: false });
 
-        if (menuId && menuId !== "all") {
-          query = query.eq("menu_id", menuId);
-        }
-
-        if (statusFilter && statusFilter !== "all") {
+        if (menuId && menuId !== "all") query = query.eq("menu_id", menuId);
+        if (statusFilter && statusFilter !== "all")
           query = query.eq("status", statusFilter);
-        }
 
         const { data, error } = await query;
-
         if (error) {
           console.error("Error fetching orders:", error);
           return [];
         }
+        console.log("Host orders:", data);
         return data || [];
       }
 
+      // === Menus ===
       function renderMenusTable() {
-        if (!menusCache || menusCache.length === 0) {
+        if (!menusCache.length) {
           menusTableContainer.innerHTML =
-            '<p class="empty-text">No menus yet. Create one to get started.</p>';
-          menusMetaEl.textContent = "";
+            '<p class="small-note">No menus yet. Create one.</p>';
           return;
         }
-
-        menusMetaEl.textContent = `${menusCache.length} menu(s) total.`;
 
         let html = `
           <table>
@@ -818,7 +744,7 @@
             <tr data-menu-id="${menu.id}">
               <td>${menu.name || ""}</td>
               <td>${menu.description || ""}</td>
-              <td>${menu.is_default ? '<span class="pill pill-default">Default</span>' : ""}</td>
+              <td>${menu.is_default ? "✅" : ""}</td>
               <td>${updated}</td>
               <td>
                 <button type="button" class="btn-secondary btn-small" data-action="edit-menu" data-id="${menu.id}">Edit</button>
@@ -831,63 +757,55 @@
         html += "</tbody></table>";
         menusTableContainer.innerHTML = html;
 
-        const rows = menusTableContainer.querySelectorAll(
-          'button[data-action="edit-menu"]'
-        );
-        rows.forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const id = btn.getAttribute("data-id");
-            const menu = menusCache.find((m) => m.id === id);
-            if (menu) {
-              renderMenuEditForm(menu);
-            }
-          });
-        });
+        menusTableContainer
+          .querySelectorAll('button[data-action="edit-menu"]')
+          .forEach((btn) =>
+            btn.addEventListener("click", () => {
+              const menu = menusCache.find(
+                (m) => m.id === btn.getAttribute("data-id")
+              );
+              if (menu) renderMenuEditForm(menu);
+            })
+          );
 
-        const deleteButtons = menusTableContainer.querySelectorAll(
-          'button[data-action="delete-menu"]'
-        );
-        deleteButtons.forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            const id = btn.getAttribute("data-id");
-            const confirmDelete = window.confirm(
-              "Delete this menu? This does not delete drinks, just the menu."
-            );
-            if (!confirmDelete) return;
-            const { error } = await supabaseClient
-              .from("menus")
-              .delete()
-              .eq("id", id);
-            if (error) {
-              console.error("Error deleting menu:", error);
-              alert("Error deleting menu. See console for details.");
-              return;
-            }
-            await refreshMenus();
-            await refreshSyrups();
-            await refreshMenuFilters();
-          });
-        });
+        menusTableContainer
+          .querySelectorAll('button[data-action="delete-menu"]')
+          .forEach((btn) =>
+            btn.addEventListener("click", async () => {
+              const id = btn.getAttribute("data-id");
+              if (!window.confirm("Delete this menu?")) return;
+              const { error } = await supabaseClient
+                .from("menus")
+                .delete()
+                .eq("id", id);
+              if (error) {
+                console.error("Error deleting menu:", error);
+                alert("Error deleting menu.");
+                return;
+              }
+              await refreshMenus();
+              await refreshMenuFilters();
+              await refreshManualOrderMenus();
+            })
+          );
       }
 
       function renderMenuEditForm(menu) {
-        if (!menu) {
-          menuEditFormContainer.innerHTML = "";
-          return;
-        }
-
         const isNew = !menu.id;
-
         const html = `
           <h3>${isNew ? "Create menu" : "Edit menu"}</h3>
           <form id="menu-edit-form">
             <div class="form-group">
               <label for="menu-name-input">Name</label>
-              <input type="text" id="menu-name-input" value="${menu.name || ""}" required />
+              <input type="text" id="menu-name-input" value="${
+                menu.name || ""
+              }" required />
             </div>
             <div class="form-group">
               <label for="menu-description-input">Description</label>
-              <textarea id="menu-description-input" rows="2">${menu.description || ""}</textarea>
+              <textarea id="menu-description-input" rows="2">${
+                menu.description || ""
+              }</textarea>
             </div>
             <div class="form-group">
               <label>
@@ -901,31 +819,26 @@
               isNew ? "Create" : "Save"
             }</button>
             <button type="button" class="btn-secondary btn-small" id="menu-edit-cancel-btn">Cancel</button>
-            <div id="menu-edit-status" class="status-message" style="margin-top:0.5rem;"></div>
+            <div id="menu-edit-status" class="status-message"></div>
           </form>
         `;
-
         menuEditFormContainer.innerHTML = html;
 
         const form = document.getElementById("menu-edit-form");
         const cancelBtn = document.getElementById("menu-edit-cancel-btn");
         const statusEl = document.getElementById("menu-edit-status");
         const nameInput = document.getElementById("menu-name-input");
-        const descriptionInput = document.getElementById(
-          "menu-description-input"
-        );
-        const isDefaultInput = document.getElementById(
-          "menu-is-default-input"
-        );
+        const descInput = document.getElementById("menu-description-input");
+        const defaultInput = document.getElementById("menu-is-default-input");
 
         form.addEventListener("submit", async (e) => {
           e.preventDefault();
-          setStatus(statusEl, "", false);
+          setStatus(statusEl, "");
 
           const payload = {
             name: nameInput.value.trim(),
-            description: descriptionInput.value.trim() || null,
-            is_default: isDefaultInput.checked
+            description: descInput.value.trim() || null,
+            is_default: defaultInput.checked
           };
 
           if (!payload.name) {
@@ -934,13 +847,11 @@
           }
 
           if (payload.is_default) {
-            const { error: clearDefaultError } = await supabaseClient
+            const { error: clearError } = await supabaseClient
               .from("menus")
               .update({ is_default: false })
               .neq("id", menu.id || "");
-            if (clearDefaultError) {
-              console.error("Error clearing defaults:", clearDefaultError);
-            }
+            if (clearError) console.error("Error clearing defaults:", clearError);
           }
 
           if (isNew) {
@@ -967,7 +878,7 @@
           setStatus(statusEl, "Saved.");
           await refreshMenus();
           await refreshMenuFilters();
-          await refreshSyrups();
+          await refreshManualOrderMenus();
         });
 
         cancelBtn.addEventListener("click", () => {
@@ -978,21 +889,18 @@
       async function refreshMenus() {
         menusCache = await fetchMenus();
         renderMenusTable();
-        await refreshMenuFilters();
-        await refreshManualOrderMenus();
       }
 
+      // === Drinks ===
       function renderDrinksTable() {
-        if (!drinksCache || drinksCache.length === 0) {
+        if (!drinksCache.length) {
           drinksTableContainer.innerHTML =
-            '<p class="empty-text">No drinks defined yet.</p>';
+            '<p class="small-note">No drinks defined yet.</p>';
           return;
         }
 
         const categoryNames = {};
-        categoriesCache.forEach((c) => {
-          categoryNames[c.id] = c.name;
-        });
+        categoriesCache.forEach((c) => (categoryNames[c.id] = c.name));
 
         let html = `
           <table>
@@ -1008,27 +916,27 @@
             <tbody>
         `;
 
-        for (const drink of drinksCache) {
-          const categoryName =
-            drink.category_id && categoryNames[drink.category_id]
-              ? categoryNames[drink.category_id]
+        for (const d of drinksCache) {
+          const catName =
+            d.category_id && categoryNames[d.category_id]
+              ? categoryNames[d.category_id]
               : "";
           html += `
-            <tr data-drink-id="${drink.id}">
-              <td>${drink.name || ""}</td>
-              <td>${categoryName || ""}</td>
-              <td>${drink.description || ""}</td>
+            <tr data-drink-id="${d.id}">
+              <td>${d.name || ""}</td>
+              <td>${catName}</td>
+              <td>${d.description || ""}</td>
               <td>${
-                drink.base_price != null
-                  ? `$${Number(drink.base_price).toFixed(2)}`
+                d.base_price != null
+                  ? `$${Number(d.base_price).toFixed(2)}`
                   : ""
               }</td>
               <td>
                 <button type="button" class="btn-secondary btn-small" data-action="edit-drink" data-id="${
-                  drink.id
+                  d.id
                 }">Edit</button>
                 <button type="button" class="btn-danger btn-small" data-action="delete-drink" data-id="${
-                  drink.id
+                  d.id
                 }">Delete</button>
               </td>
             </tr>
@@ -1038,51 +946,39 @@
         html += "</tbody></table>";
         drinksTableContainer.innerHTML = html;
 
-        const editButtons = drinksTableContainer.querySelectorAll(
-          'button[data-action="edit-drink"]'
-        );
-        editButtons.forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const id = btn.getAttribute("data-id");
-            const drink = drinksCache.find((d) => d.id === id);
-            if (drink) {
-              renderDrinkEditForm(drink);
-            }
-          });
-        });
+        drinksTableContainer
+          .querySelectorAll('button[data-action="edit-drink"]')
+          .forEach((btn) =>
+            btn.addEventListener("click", () => {
+              const drink = drinksCache.find(
+                (d) => d.id === btn.getAttribute("data-id")
+              );
+              if (drink) renderDrinkEditForm(drink);
+            })
+          );
 
-        const deleteButtons = drinksTableContainer.querySelectorAll(
-          'button[data-action="delete-drink"]'
-        );
-        deleteButtons.forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            const id = btn.getAttribute("data-id");
-            const confirmDelete = window.confirm(
-              "Delete this drink? It will also be removed from any menus."
-            );
-            if (!confirmDelete) return;
-            const { error } = await supabaseClient
-              .from("drinks")
-              .delete()
-              .eq("id", id);
-            if (error) {
-              console.error("Error deleting drink:", error);
-              alert("Error deleting drink. See console for details.");
-              return;
-            }
-            await refreshDrinks();
-          });
-        });
+        drinksTableContainer
+          .querySelectorAll('button[data-action="delete-drink"]')
+          .forEach((btn) =>
+            btn.addEventListener("click", async () => {
+              const id = btn.getAttribute("data-id");
+              if (!window.confirm("Delete this drink?")) return;
+              const { error } = await supabaseClient
+                .from("drinks")
+                .delete()
+                .eq("id", id);
+              if (error) {
+                console.error("Error deleting drink:", error);
+                alert("Error deleting drink.");
+                return;
+              }
+              await refreshDrinks();
+            })
+          );
       }
 
       function renderDrinkEditForm(drink) {
-        if (!drink) {
-          drinkEditFormContainer.innerHTML = "";
-          return;
-        }
-
         const isNew = !drink.id;
-
         const categoryOptions = categoriesCache
           .map(
             (c) =>
@@ -1124,38 +1020,29 @@
               isNew ? "Create" : "Save"
             }</button>
             <button type="button" class="btn-secondary btn-small" id="drink-edit-cancel-btn">Cancel</button>
-            <div id="drink-edit-status" class="status-message" style="margin-top:0.5rem;"></div>
+            <div id="drink-edit-status" class="status-message"></div>
           </form>
         `;
-
         drinkEditFormContainer.innerHTML = html;
 
         const form = document.getElementById("drink-edit-form");
         const cancelBtn = document.getElementById("drink-edit-cancel-btn");
         const statusEl = document.getElementById("drink-edit-status");
         const nameInput = document.getElementById("drink-name-input");
-        const categorySelect = document.getElementById(
-          "drink-category-select"
-        );
-        const descriptionInput = document.getElementById(
-          "drink-description-input"
-        );
-        const basePriceInput = document.getElementById(
-          "drink-base-price-input"
-        );
+        const catSelect = document.getElementById("drink-category-select");
+        const descInput = document.getElementById("drink-description-input");
+        const priceInput = document.getElementById("drink-base-price-input");
 
         form.addEventListener("submit", async (e) => {
           e.preventDefault();
-          setStatus(statusEl, "", false);
+          setStatus(statusEl, "");
 
           const payload = {
             name: nameInput.value.trim(),
-            category_id: categorySelect.value || null,
-            description: descriptionInput.value.trim() || null,
+            category_id: catSelect.value || null,
+            description: descInput.value.trim() || null,
             base_price:
-              basePriceInput.value !== ""
-                ? parseFloat(basePriceInput.value)
-                : null
+              priceInput.value !== "" ? Number(priceInput.value) : null
           };
 
           if (!payload.name) {
@@ -1199,10 +1086,11 @@
         await refreshManualOrderDrinks();
       }
 
+      // === Categories ===
       function renderCategoriesTable() {
-        if (!categoriesCache || categoriesCache.length === 0) {
+        if (!categoriesCache.length) {
           categoriesTableContainer.innerHTML =
-            '<p class="empty-text">No categories yet. Coffee, Tea, etc.</p>';
+            '<p class="small-note">No categories yet.</p>';
           return;
         }
 
@@ -1218,17 +1106,17 @@
             <tbody>
         `;
 
-        for (const category of categoriesCache) {
+        for (const c of categoriesCache) {
           html += `
-            <tr data-category-id="${category.id}">
-              <td>${category.name || ""}</td>
-              <td>${category.sort_order != null ? category.sort_order : ""}</td>
+            <tr data-category-id="${c.id}">
+              <td>${c.name || ""}</td>
+              <td>${c.sort_order != null ? c.sort_order : ""}</td>
               <td>
                 <button type="button" class="btn-secondary btn-small" data-action="edit-category" data-id="${
-                  category.id
+                  c.id
                 }">Edit</button>
                 <button type="button" class="btn-danger btn-small" data-action="delete-category" data-id="${
-                  category.id
+                  c.id
                 }">Delete</button>
               </td>
             </tr>
@@ -1238,52 +1126,40 @@
         html += "</tbody></table>";
         categoriesTableContainer.innerHTML = html;
 
-        const editButtons = categoriesTableContainer.querySelectorAll(
-          'button[data-action="edit-category"]'
-        );
-        editButtons.forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const id = btn.getAttribute("data-id");
-            const category = categoriesCache.find((c) => c.id === id);
-            if (category) {
-              renderCategoryEditForm(category);
-            }
-          });
-        });
+        categoriesTableContainer
+          .querySelectorAll('button[data-action="edit-category"]')
+          .forEach((btn) =>
+            btn.addEventListener("click", () => {
+              const cat = categoriesCache.find(
+                (c) => c.id === btn.getAttribute("data-id")
+              );
+              if (cat) renderCategoryEditForm(cat);
+            })
+          );
 
-        const deleteButtons = categoriesTableContainer.querySelectorAll(
-          'button[data-action="delete-category"]'
-        );
-        deleteButtons.forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            const id = btn.getAttribute("data-id");
-            const confirmDelete = window.confirm(
-              "Delete this category? Drinks using it will have no category."
-            );
-            if (!confirmDelete) return;
-            const { error } = await supabaseClient
-              .from("categories")
-              .delete()
-              .eq("id", id);
-            if (error) {
-              console.error("Error deleting category:", error);
-              alert("Error deleting category. See console for details.");
-              return;
-            }
-            await refreshCategories();
-            await refreshDrinks();
-          });
-        });
+        categoriesTableContainer
+          .querySelectorAll('button[data-action="delete-category"]')
+          .forEach((btn) =>
+            btn.addEventListener("click", async () => {
+              const id = btn.getAttribute("data-id");
+              if (!window.confirm("Delete this category?")) return;
+              const { error } = await supabaseClient
+                .from("categories")
+                .delete()
+                .eq("id", id);
+              if (error) {
+                console.error("Error deleting category:", error);
+                alert("Error deleting category.");
+                return;
+              }
+              await refreshCategories();
+              await refreshDrinks();
+            })
+          );
       }
 
       function renderCategoryEditForm(category) {
-        if (!category) {
-          categoryEditFormContainer.innerHTML = "";
-          return;
-        }
-
         const isNew = !category.id;
-
         const html = `
           <h3>${isNew ? "Create category" : "Edit category"}</h3>
           <form id="category-edit-form">
@@ -1303,30 +1179,25 @@
               isNew ? "Create" : "Save"
             }</button>
             <button type="button" class="btn-secondary btn-small" id="category-edit-cancel-btn">Cancel</button>
-            <div id="category-edit-status" class="status-message" style="margin-top:0.5rem;"></div>
+            <div id="category-edit-status" class="status-message"></div>
           </form>
         `;
-
         categoryEditFormContainer.innerHTML = html;
 
         const form = document.getElementById("category-edit-form");
         const cancelBtn = document.getElementById("category-edit-cancel-btn");
         const statusEl = document.getElementById("category-edit-status");
         const nameInput = document.getElementById("category-name-input");
-        const sortOrderInput = document.getElementById(
-          "category-sort-order-input"
-        );
+        const sortInput = document.getElementById("category-sort-order-input");
 
         form.addEventListener("submit", async (e) => {
           e.preventDefault();
-          setStatus(statusEl, "", false);
+          setStatus(statusEl, "");
 
           const payload = {
             name: nameInput.value.trim(),
             sort_order:
-              sortOrderInput.value !== ""
-                ? parseInt(sortOrderInput.value, 10)
-                : null
+              sortInput.value !== "" ? parseInt(sortInput.value, 10) : null
           };
 
           if (!payload.name) {
@@ -1370,17 +1241,16 @@
         renderCategoriesTable();
       }
 
+      // === Syrups ===
       function renderSyrupsTable() {
-        if (!syrupsCache || syrupsCache.length === 0) {
+        if (!syrupsCache.length) {
           syrupsTableContainer.innerHTML =
-            '<p class="empty-text">No syrups defined yet.</p>';
+            '<p class="small-note">No syrups yet.</p>';
           return;
         }
 
         const menuNames = {};
-        menusCache.forEach((m) => {
-          menuNames[m.id] = m.name;
-        });
+        menusCache.forEach((m) => (menuNames[m.id] = m.name));
 
         let html = `
           <table>
@@ -1395,19 +1265,19 @@
             <tbody>
         `;
 
-        for (const syrup of syrupsCache) {
-          const menuName = syrup.menu_id ? menuNames[syrup.menu_id] || "" : "";
+        for (const s of syrupsCache) {
+          const menuName = s.menu_id ? menuNames[s.menu_id] || "" : "";
           html += `
-            <tr data-syrup-id="${syrup.id}">
-              <td>${syrup.name || ""}</td>
+            <tr data-syrup-id="${s.id}">
+              <td>${s.name || ""}</td>
               <td>${menuName}</td>
-              <td>${syrup.notes || ""}</td>
+              <td>${s.notes || ""}</td>
               <td>
                 <button type="button" class="btn-secondary btn-small" data-action="edit-syrup" data-id="${
-                  syrup.id
+                  s.id
                 }">Edit</button>
                 <button type="button" class="btn-danger btn-small" data-action="delete-syrup" data-id="${
-                  syrup.id
+                  s.id
                 }">Delete</button>
               </td>
             </tr>
@@ -1417,51 +1287,39 @@
         html += "</tbody></table>";
         syrupsTableContainer.innerHTML = html;
 
-        const editButtons = syrupsTableContainer.querySelectorAll(
-          'button[data-action="edit-syrup"]'
-        );
-        editButtons.forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const id = btn.getAttribute("data-id");
-            const syrup = syrupsCache.find((s) => s.id === id);
-            if (syrup) {
-              renderSyrupEditForm(syrup);
-            }
-          });
-        });
+        syrupsTableContainer
+          .querySelectorAll('button[data-action="edit-syrup"]')
+          .forEach((btn) =>
+            btn.addEventListener("click", () => {
+              const syrup = syrupsCache.find(
+                (s) => s.id === btn.getAttribute("data-id")
+              );
+              if (syrup) renderSyrupEditForm(syrup);
+            })
+          );
 
-        const deleteButtons = syrupsTableContainer.querySelectorAll(
-          'button[data-action="delete-syrup"]'
-        );
-        deleteButtons.forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            const id = btn.getAttribute("data-id");
-            const confirmDelete = window.confirm(
-              "Delete this syrup? Guests will no longer see it."
-            );
-            if (!confirmDelete) return;
-            const { error } = await supabaseClient
-              .from("syrups")
-              .delete()
-              .eq("id", id);
-            if (error) {
-              console.error("Error deleting syrup:", error);
-              alert("Error deleting syrup. See console for details.");
-              return;
-            }
-            await refreshSyrups();
-          });
-        });
+        syrupsTableContainer
+          .querySelectorAll('button[data-action="delete-syrup"]')
+          .forEach((btn) =>
+            btn.addEventListener("click", async () => {
+              const id = btn.getAttribute("data-id");
+              if (!window.confirm("Delete this syrup?")) return;
+              const { error } = await supabaseClient
+                .from("syrups")
+                .delete()
+                .eq("id", id);
+              if (error) {
+                console.error("Error deleting syrup:", error);
+                alert("Error deleting syrup.");
+                return;
+              }
+              await refreshSyrups();
+            })
+          );
       }
 
       function renderSyrupEditForm(syrup) {
-        if (!syrup) {
-          syrupEditFormContainer.innerHTML = "";
-          return;
-        }
-
         const isNew = !syrup.id;
-
         const menuOptions = menusCache
           .map(
             (m) =>
@@ -1481,7 +1339,7 @@
               }" required />
             </div>
             <div class="form-group">
-              <label for="syrup-menu-select">Menu (where this syrup is available)</label>
+              <label for="syrup-menu-select">Menu</label>
               <select id="syrup-menu-select">
                 <option value="">(none)</option>
                 ${menuOptions}
@@ -1497,10 +1355,9 @@
               isNew ? "Create" : "Save"
             }</button>
             <button type="button" class="btn-secondary btn-small" id="syrup-edit-cancel-btn">Cancel</button>
-            <div id="syrup-edit-status" class="status-message" style="margin-top:0.5rem;"></div>
+            <div id="syrup-edit-status" class="status-message"></div>
           </form>
         `;
-
         syrupEditFormContainer.innerHTML = html;
 
         const form = document.getElementById("syrup-edit-form");
@@ -1512,7 +1369,7 @@
 
         form.addEventListener("submit", async (e) => {
           e.preventDefault();
-          setStatus(statusEl, "", false);
+          setStatus(statusEl, "");
 
           const payload = {
             name: nameInput.value.trim(),
@@ -1561,20 +1418,19 @@
         await refreshManualSyrups();
       }
 
+      // === Orders ===
       function renderOrdersTable(orders) {
-        if (!orders || orders.length === 0) {
+        if (!orders.length) {
           ordersTableContainer.innerHTML =
             '<p class="orders-empty-text">No orders for this filter.</p>';
           return;
         }
 
         const menuNames = {};
-        menusCache.forEach((m) => {
-          menuNames[m.id] = m.name;
-        });
+        menusCache.forEach((m) => (menuNames[m.id] = m.name));
 
         let html = `
-          <table class="orders-table">
+          <table>
             <thead>
               <tr>
                 <th>Time</th>
@@ -1589,49 +1445,45 @@
             <tbody>
         `;
 
-        for (const order of orders) {
-          const created = order.created_at
-            ? new Date(order.created_at).toLocaleTimeString()
+        for (const o of orders) {
+          const created = o.created_at
+            ? new Date(o.created_at).toLocaleTimeString()
             : "";
-          const menuName = order.menu_id ? menuNames[order.menu_id] || "" : "";
+          const menuName = o.menu_id ? menuNames[o.menu_id] || "" : "";
 
           let detailTags = "";
-          if (order.milk) {
-            detailTags += `<span class="tag-pill tag-milk">${order.milk}</span>`;
+          if (o.milk) {
+            detailTags += `<span class="tag-pill tag-milk">${o.milk}</span>`;
           }
-          if (order.iced) {
+          if (o.iced) {
             detailTags += `<span class="tag-pill tag-iced">Iced</span>`;
           }
-          if (order.syrup) {
-            const flavour = order.syrup_flavour
-              ? ` (${order.syrup_flavour})`
-              : "";
+          if (o.syrup) {
+            const flavour = o.syrup_flavour ? ` (${o.syrup_flavour})` : "";
             detailTags += `<span class="tag-pill tag-syrup">Syrup${flavour}</span>`;
           }
-          if (order.notes) {
-            detailTags += `<div style="margin-top:0.2rem;font-size:0.75rem;color:#555;">${order.notes}</div>`;
+          if (o.notes) {
+            detailTags += `<div style="margin-top:0.2rem;font-size:0.75rem;color:#555;">${o.notes}</div>`;
           }
 
           html += `
-            <tr data-order-id="${order.id}">
+            <tr data-order-id="${o.id}">
               <td>${created}</td>
-              <td>${menuName || ""}</td>
-              <td>${order.customer_name || ""}</td>
-              <td>${order.drink || ""}</td>
-              <td>${detailTags || ""}</td>
-              <td>${order.status || "open"}</td>
+              <td>${menuName}</td>
+              <td>${o.customer_name || ""}</td>
+              <td>${o.drink || ""}</td>
+              <td>${detailTags}</td>
+              <td>${o.status || "open"}</td>
               <td>
-                <div class="order-actions">
-                  <button type="button" class="btn-secondary btn-small" data-action="mark-complete" data-id="${
-                    order.id
-                  }">Complete</button>
-                  <button type="button" class="btn-secondary btn-small" data-action="mark-cancelled" data-id="${
-                    order.id
-                  }">Cancel</button>
-                  <button type="button" class="btn-danger btn-small" data-action="delete-order" data-id="${
-                    order.id
-                  }">Delete</button>
-                </div>
+                <button type="button" class="btn-secondary btn-small" data-action="complete" data-id="${
+                  o.id
+                }">Complete</button>
+                <button type="button" class="btn-secondary btn-small" data-action="cancel" data-id="${
+                  o.id
+                }">Cancel</button>
+                <button type="button" class="btn-danger btn-small" data-action="delete" data-id="${
+                  o.id
+                }">Delete</button>
               </td>
             </tr>
           `;
@@ -1640,70 +1492,65 @@
         html += "</tbody></table>";
         ordersTableContainer.innerHTML = html;
 
-        const completeButtons = ordersTableContainer.querySelectorAll(
-          'button[data-action="mark-complete"]'
-        );
-        completeButtons.forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            const id = btn.getAttribute("data-id");
-            const { error } = await supabaseClient
-              .from("orders")
-              .update({ status: "completed" })
-              .eq("id", id);
-            if (error) {
-              console.error("Error updating order:", error);
-              alert("Error updating order. See console for details.");
-              return;
-            }
-            await refreshOrders();
-          });
-        });
+        ordersTableContainer
+          .querySelectorAll('button[data-action="complete"]')
+          .forEach((btn) =>
+            btn.addEventListener("click", async () => {
+              const id = btn.getAttribute("data-id");
+              const { error } = await supabaseClient
+                .from("orders")
+                .update({ status: "completed" })
+                .eq("id", id);
+              if (error) {
+                console.error("Error updating order:", error);
+                alert("Error updating order.");
+                return;
+              }
+              await refreshOrders();
+            })
+          );
 
-        const cancelButtons = ordersTableContainer.querySelectorAll(
-          'button[data-action="mark-cancelled"]'
-        );
-        cancelButtons.forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            const id = btn.getAttribute("data-id");
-            const { error } = await supabaseClient
-              .from("orders")
-              .update({ status: "cancelled" })
-              .eq("id", id);
-            if (error) {
-              console.error("Error updating order:", error);
-              alert("Error updating order. See console for details.");
-              return;
-            }
-            await refreshOrders();
-          });
-        });
+        ordersTableContainer
+          .querySelectorAll('button[data-action="cancel"]')
+          .forEach((btn) =>
+            btn.addEventListener("click", async () => {
+              const id = btn.getAttribute("data-id");
+              const { error } = await supabaseClient
+                .from("orders")
+                .update({ status: "cancelled" })
+                .eq("id", id);
+              if (error) {
+                console.error("Error updating order:", error);
+                alert("Error updating order.");
+                return;
+              }
+              await refreshOrders();
+            })
+          );
 
-        const deleteButtons = ordersTableContainer.querySelectorAll(
-          'button[data-action="delete-order"]'
-        );
-        deleteButtons.forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            const id = btn.getAttribute("data-id");
-            const confirmDelete = window.confirm("Delete this order?");
-            if (!confirmDelete) return;
-            const { error } = await supabaseClient
-              .from("orders")
-              .delete()
-              .eq("id", id);
-            if (error) {
-              console.error("Error deleting order:", error);
-              alert("Error deleting order. See console for details.");
-              return;
-            }
-            await refreshOrders();
-          });
-        });
+        ordersTableContainer
+          .querySelectorAll('button[data-action="delete"]')
+          .forEach((btn) =>
+            btn.addEventListener("click", async () => {
+              const id = btn.getAttribute("data-id");
+              if (!window.confirm("Delete this order?")) return;
+              const { error } = await supabaseClient
+                .from("orders")
+                .delete()
+                .eq("id", id);
+              if (error) {
+                console.error("Error deleting order:", error);
+                alert("Error deleting order.");
+                return;
+              }
+              await refreshOrders();
+            })
+          );
       }
 
       async function refreshOrders() {
         const menuId = ordersMenuFilter.value || "all";
         const statusFilter = ordersStatusFilter.value || "all";
-
         const orders = await fetchOrders(menuId, statusFilter);
         renderOrdersTable(orders);
       }
@@ -1723,20 +1570,18 @@
         });
       }
 
+      // === Manual order helpers ===
       async function refreshManualOrderMenus() {
         manualMenuSelect.innerHTML = "";
-
-        if (!menusCache || menusCache.length === 0) {
+        if (!menusCache.length) {
           const opt = document.createElement("option");
           opt.value = "";
-          opt.textContent = "No menus available";
+          opt.textContent = "No menus";
           manualMenuSelect.appendChild(opt);
           manualMenuSelect.disabled = true;
           return;
         }
-
         manualMenuSelect.disabled = false;
-
         menusCache.forEach((m) => {
           const opt = document.createElement("option");
           opt.value = m.id;
@@ -1747,23 +1592,19 @@
 
       async function refreshManualOrderDrinks() {
         manualDrinkSelect.innerHTML = "";
-
-        if (!drinksCache || drinksCache.length === 0) {
+        if (!drinksCache.length) {
           const opt = document.createElement("option");
           opt.value = "";
-          opt.textContent = "No drinks available";
+          opt.textContent = "No drinks";
           manualDrinkSelect.appendChild(opt);
           manualDrinkSelect.disabled = true;
           return;
         }
-
         manualDrinkSelect.disabled = false;
-
-        const drinksSorted = [...drinksCache].sort((a, b) =>
+        const sorted = [...drinksCache].sort((a, b) =>
           a.name.localeCompare(b.name)
         );
-
-        drinksSorted.forEach((d) => {
+        sorted.forEach((d) => {
           const opt = document.createElement("option");
           opt.value = d.id;
           opt.textContent = d.name || "Unnamed drink";
@@ -1773,20 +1614,17 @@
 
       async function refreshManualSyrups() {
         manualSyrupFlavourSelect.innerHTML = "";
-
-        if (!syrupsCache || syrupsCache.length === 0) {
+        if (!syrupsCache.length) {
           const opt = document.createElement("option");
           opt.value = "";
-          opt.textContent = "No syrups available";
+          opt.textContent = "No syrups";
           manualSyrupFlavourSelect.appendChild(opt);
           manualSyrupFlavourSelect.disabled = true;
           return;
         }
-
         manualSyrupFlavourSelect.disabled = false;
 
         const menuId = manualMenuSelect.value || null;
-
         let filtered = syrupsCache;
         if (menuId) {
           filtered = syrupsCache.filter(
@@ -1796,7 +1634,7 @@
 
         const defaultOpt = document.createElement("option");
         defaultOpt.value = "";
-        defaultOpt.textContent = "Select a flavour";
+        defaultOpt.textContent = "Select flavour";
         manualSyrupFlavourSelect.appendChild(defaultOpt);
 
         filtered.forEach((s) => {
@@ -1812,7 +1650,6 @@
           (r) => r.checked
         );
         if (!selected) return;
-
         if (selected.value === "yes") {
           manualSyrupFlavourGroup.style.display = "block";
         } else {
@@ -1821,22 +1658,15 @@
         }
       }
 
-      manualSyrupChoiceRadios.forEach((radio) => {
-        radio.addEventListener("change", handleManualSyrupChoiceChange);
-      });
+      manualSyrupChoiceRadios.forEach((r) =>
+        r.addEventListener("change", handleManualSyrupChoiceChange)
+      );
 
-      manualMenuSelect.addEventListener("change", async () => {
-        await refreshManualSyrups();
-      });
+      manualMenuSelect.addEventListener("change", refreshManualSyrups);
 
       async function handleManualOrderSubmit(e) {
         e.preventDefault();
-        setStatus(manualOrderStatus, "", false);
-
-        if (!menusCache || menusCache.length === 0) {
-          setStatus(manualOrderStatus, "No menus configured.", true);
-          return;
-        }
+        setStatus(manualOrderStatus, "");
 
         const menuId = manualMenuSelect.value;
         const drinkId = manualDrinkSelect.value;
@@ -1888,12 +1718,12 @@
         const payload = {
           customer_name: customerName,
           drink: drink.name,
-          milk: selectedMilk = milk,
+          milk,
           syrup: syrupChoice === "yes",
           syrup_flavour:
             syrupChoice === "yes" && syrupFlavour ? syrupFlavour : null,
           iced: icedChoice === "yes",
-          notes: notes
+          notes
         };
 
         const { error } = await supabaseClient.from("orders").insert([
@@ -1907,7 +1737,7 @@
           console.error("Error inserting manual order:", error);
           setStatus(
             manualOrderStatus,
-            "Error creating order. See console.",
+            "Error creating order. Check console.",
             true
           );
           return;
@@ -1921,55 +1751,53 @@
 
       manualOrderForm.addEventListener("submit", handleManualOrderSubmit);
 
-      createMenuBtn.addEventListener("click", () => {
+      // === Button hooks ===
+      createMenuBtn.addEventListener("click", () =>
         renderMenuEditForm({
           id: null,
           name: "",
           description: "",
           is_default: menusCache.length === 0
-        });
-      });
-
+        })
+      );
       refreshMenusBtn.addEventListener("click", refreshMenus);
 
-      createDrinkBtn.addEventListener("click", () => {
+      createDrinkBtn.addEventListener("click", () =>
         renderDrinkEditForm({
           id: null,
           name: "",
           category_id: null,
           description: "",
           base_price: null
-        });
-      });
-
+        })
+      );
       refreshDrinksBtn.addEventListener("click", refreshDrinks);
 
-      createCategoryBtn.addEventListener("click", () => {
+      createCategoryBtn.addEventListener("click", () =>
         renderCategoryEditForm({
           id: null,
           name: "",
           sort_order: null
-        });
-      });
-
+        })
+      );
       refreshCategoriesBtn.addEventListener("click", refreshCategories);
 
-      createSyrupBtn.addEventListener("click", () => {
+      createSyrupBtn.addEventListener("click", () =>
         renderSyrupEditForm({
           id: null,
           name: "",
           menu_id: null,
           notes: ""
-        });
-      });
-
+        })
+      );
       refreshSyrupsBtn.addEventListener("click", refreshSyrups);
 
       ordersMenuFilter.addEventListener("change", refreshOrders);
       ordersStatusFilter.addEventListener("change", refreshOrders);
       refreshOrdersBtn.addEventListener("click", refreshOrders);
 
-      async function init() {
+      // === Init ===
+      async function initHost() {
         menusTableContainer.innerHTML = "<p>Loading menus…</p>";
         drinksTableContainer.innerHTML = "<p>Loading drinks…</p>";
         categoriesTableContainer.innerHTML = "<p>Loading categories…</p>";
@@ -1994,11 +1822,10 @@
         await refreshManualSyrups();
 
         handleManualSyrupChoiceChange();
-
         await refreshOrders();
       }
 
-      init();
+      initHost();
     </script>
   </body>
 </html>
