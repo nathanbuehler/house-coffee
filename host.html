@@ -592,38 +592,49 @@
             ></div>
           </section>
 
-          <!-- Drinks -->
-          <section class="section panel">
-            <div class="section-header">
-              <div>
-                <h2>Drinks</h2>
-                <div class="small-note">
-                  Configure drinks and assign a category.
-                </div>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  class="btn-primary btn-small"
-                  id="create-drink-btn"
-                >
-                  + New drink
-                </button>
-                <button
-                  type="button"
-                  class="btn-secondary btn-small"
-                  id="refresh-drinks-btn"
-                >
-                  Refresh
-                </button>
-              </div>
-            </div>
 
-            <div id="drinks-table-container"></div>
-            <div
-              id="drink-edit-form-container"
-              style="margin-top: 0.75rem;"
-            ></div>
+<!-- Drinks -->
+<section class="section panel" id="drinks-section">
+  <div class="section-header">
+    <div>
+      <h2>Drinks</h2>
+      <div class="small-note">
+        Configure drinks and assign a category.
+      </div>
+    </div>
+    <div class="section-header-actions">
+      <button
+        type="button"
+        class="collapsible-toggle"
+        id="toggle-drinks-list-btn"
+      >
+        <span class="collapsible-toggle-icon">▾</span>
+        <span class="collapsible-toggle-label">Hide list</span>
+      </button>
+      <button
+        type="button"
+        class="btn-primary btn-small"
+        id="create-drink-btn"
+      >
+        + New drink
+      </button>
+      <button
+        type="button"
+        class="btn-secondary btn-small"
+        id="refresh-drinks-btn"
+      >
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div id="drinks-table-container"></div>
+  <div
+    id="drink-edit-form-container"
+    style="margin-top: 0.75rem;"
+  ></div>
+</section>
+ ></div>
           </section>
 
           <!-- Categories -->
