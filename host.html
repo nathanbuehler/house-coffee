@@ -643,17 +643,18 @@
 
       // === Menus ===
       async function fetchMenus() {
-        const { data, error } = await supabaseClient
-          .from("menus")
-          .select("*")
-          .order("updated_at", { ascending: false });
+  const { data, error } = await supabaseClient
+    .from("menus")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-        if (error) {
-          console.error("Error fetching menus:", error);
-          return [];
-        }
-        return data || [];
-      }
+  if (error) {
+    console.error("Error fetching menus:", error);
+    return [];
+  }
+  return data || [];
+}
+
 
       async function upsertMenu(menu) {
         const payload = {
