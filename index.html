@@ -17,6 +17,17 @@
         background-color: #333;
         color: #fff;
         padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+
+      .header-main {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
       }
 
       header h1 {
@@ -28,6 +39,25 @@
         margin: 0.25rem 0 0;
         font-size: 0.9rem;
         opacity: 0.8;
+      }
+
+      .header-nav {
+        display: flex;
+        align-items: center;
+      }
+
+      .header-nav a {
+        font-size: 0.85rem;
+        text-decoration: none;
+        color: #e5e7eb;
+        border: 1px solid #6b7280;
+        border-radius: 999px;
+        padding: 0.25rem 0.7rem;
+        background-color: #111827;
+      }
+
+      .header-nav a:hover {
+        background-color: #1f2937;
       }
 
       main {
@@ -136,6 +166,7 @@
         align-items: center;
         gap: 0.5rem;
         margin-bottom: 0.75rem;
+        flex-wrap: wrap;
       }
 
       .menu-select-row label {
@@ -178,14 +209,9 @@
         resize: vertical;
       }
 
+      /* QOL: make inline rows vertical at all sizes */
       .form-row-inline {
-        display: flex;
-        gap: 0.75rem;
-      }
-
-      .form-row-inline .form-row {
-        flex: 1;
-        margin-bottom: 0;
+        display: block;
       }
 
       .radio-group {
@@ -206,6 +232,8 @@
         justify-content: space-between;
         align-items: baseline;
         margin-bottom: 0.5rem;
+        gap: 0.5rem;
+        flex-wrap: wrap;
       }
 
       .order-section-header p {
@@ -252,17 +280,18 @@
           align-self: stretch;
           justify-content: flex-end;
         }
-
-        .form-row-inline {
-          flex-direction: column;
-        }
       }
     </style>
   </head>
   <body>
     <header>
-      <h1>Nathan's Coffee</h1>
-      <p>Pick a drink, add your preferences, submit. No tipping prompt, you’re welcome.</p>
+      <div class="header-main">
+        <h1>Nathan's Coffee</h1>
+        <p>Pick a drink, add your preferences, submit. No tipping prompt, you’re welcome.</p>
+      </div>
+      <nav class="header-nav">
+        <a href="host.html">Host view</a>
+      </nav>
     </header>
 
     <main>
@@ -313,6 +342,7 @@
             </select>
           </div>
 
+          <!-- Now vertical: milk section then iced section -->
           <div class="form-row-inline">
             <div class="form-row">
               <label for="milk-select">Milk</label>
@@ -340,6 +370,7 @@
             </div>
           </div>
 
+          <!-- Now vertical: syrup choice then flavour -->
           <div class="form-row-inline">
             <div class="form-row">
               <label>Add syrup?</label>
@@ -755,8 +786,10 @@
 
           orderForm.reset();
           // Reset defaults (hot, no syrup)
-          document.querySelector('input[name="iced"][value="no"]').checked = true;
-          document.querySelector('input[name="syrup"][value="no"]').checked = true;
+          document.querySelector('input[name="iced"][value="no"]').checked =
+            true;
+          document.querySelector('input[name="syrup"][value="no"]').checked =
+            true;
           handleSyrupChoiceChange();
 
           setStatus("Order submitted successfully!", false, true);
