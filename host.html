@@ -92,6 +92,7 @@
       button {
         font-family: inherit;
         font-size: 0.85rem;
+        cursor: pointer;
       }
       .btn-primary {
         background-color: #2563eb;
@@ -99,7 +100,6 @@
         border: none;
         padding: 0.3rem 0.6rem;
         border-radius: 4px;
-        cursor: pointer;
       }
       .btn-secondary {
         background-color: #e5e7eb;
@@ -107,7 +107,6 @@
         border: 1px solid #d1d5db;
         padding: 0.3rem 0.6rem;
         border-radius: 4px;
-        cursor: pointer;
       }
       .btn-danger {
         background-color: #dc2626;
@@ -115,7 +114,6 @@
         border: none;
         padding: 0.3rem 0.6rem;
         border-radius: 4px;
-        cursor: pointer;
       }
       .btn-small {
         font-size: 0.75rem;
@@ -170,16 +168,6 @@
         background-color: #fee2e2;
         color: #b91c1c;
       }
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.15rem 0.4rem;
-        font-size: 0.75rem;
-        border-radius: 999px;
-        border: 1px solid #e5e7eb;
-        background-color: #f9fafb;
-        gap: 0.25rem;
-      }
       .small-note {
         font-size: 0.8rem;
         color: #6b7280;
@@ -207,42 +195,6 @@
       .manual-order-form textarea {
         min-height: 50px;
         resize: vertical;
-      }
-      button {
-        cursor: pointer;
-      }
-      .btn-primary {
-        background: #3182ce;
-        color: #fff;
-        border: none;
-        padding: 0.4rem 0.8rem;
-        border-radius: 4px;
-        font-size: 0.85rem;
-      }
-      .btn-secondary {
-        background: #e2e8f0;
-        color: #1a202c;
-        border: none;
-        padding: 0.4rem 0.8rem;
-        border-radius: 4px;
-        font-size: 0.85rem;
-      }
-      .btn-danger {
-        background: #e53e3e;
-        color: #fff;
-        border: none;
-        padding: 0.4rem 0.8rem;
-        border-radius: 4px;
-        font-size: 0.85rem;
-      }
-      .btn-small {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.4rem;
-      }
-      .status-message {
-        font-size: 0.8rem;
-        color: #4a5568;
-        margin-top: 0.25rem;
       }
       .orders-table td {
         vertical-align: top;
@@ -297,28 +249,15 @@
     </header>
 
     <main>
+      <!-- Connection info (no inputs, just status) -->
       <section class="section panel">
         <div class="section-header">
           <div>
             <h2>Supabase connection</h2>
             <p class="small-note">
-              Paste your Supabase URL &amp; anon key. Stored only in this
-              browser.
+              Using hard-coded URL and anon key from script.
             </p>
           </div>
-        </div>
-        <div class="form-row">
-          <label for="supabase-url">Supabase URL</label>
-          <input id="supabase-url" type="text" />
-        </div>
-        <div class="form-row">
-          <label for="supabase-key">Supabase Anon Key</label>
-          <input id="supabase-key" type="password" />
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn-primary" id="save-connection-btn">
-            Save connection
-          </button>
           <div id="connection-status" class="status-message"></div>
         </div>
       </section>
@@ -580,9 +519,17 @@
 
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
-      const supabaseUrlInput = document.getElementById("supabase-url");
-      const supabaseKeyInput = document.getElementById("supabase-key");
-      const saveConnectionBtn = document.getElementById("save-connection-btn");
+      // 🔐 Hard-coded Supabase credentials
+      // TODO: replace with your real project values
+      const SUPABASE_URL = "https://cyfdiuyjzcrommxldpwp.supabase.co";
+      const SUPABASE_KEY = "sb_publishable_hzG6hrSF4DBFz9FrGC-Ghw_MSbQCHFo";
+
+      const supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+      // DOM references
       const connectionStatusEl = document.getElementById("connection-status");
 
       const menusTableContainer = document.getElementById(
@@ -651,8 +598,6 @@
       const manualOrderStatus =
         document.getElementById("manual-order-status");
 
-      let supabaseClient = null;
-
       let menusCache = [];
       let drinksCache = [];
       let categoriesCache = [];
@@ -663,50 +608,7 @@
         el.textContent = message || "";
       }
 
-      function initSupabaseClient(url, key) {
-        return window.supabase.createClient(url, key);
-      }
-
-      function loadConnectionFromStorage() {
-        try {
-          const saved = JSON.parse(
-            window.localStorage.getItem("coffee-host-connection") || "{}"
-          );
-          if (saved.url) supabaseUrlInput.value = saved.url;
-          if (saved.key) supabaseKeyInput.value = saved.key;
-          if (saved.url && saved.key) {
-            supabaseClient = initSupabaseClient(saved.url, saved.key);
-            setStatus(connectionStatusEl, "Connection loaded.");
-          }
-        } catch (e) {
-          console.error("Error loading connection", e);
-        }
-      }
-
-      function saveConnectionToStorage(url, key) {
-        window.localStorage.setItem(
-          "coffee-host-connection",
-          JSON.stringify({ url, key })
-        );
-      }
-
-      saveConnectionBtn.addEventListener("click", () => {
-        const url = supabaseUrlInput.value.trim();
-        const key = supabaseKeyInput.value.trim();
-        if (!url || !key) {
-          setStatus(connectionStatusEl, "URL and key are required.");
-          return;
-        }
-        supabaseClient = initSupabaseClient(url, key);
-        saveConnectionToStorage(url, key);
-        setStatus(connectionStatusEl, "Connection saved.");
-        bootstrapData();
-      });
-
       async function bootstrapData() {
-        if (!supabaseClient) {
-          return;
-        }
         setStatus(connectionStatusEl, "Loading data…");
 
         menusTableContainer.innerHTML = "<p>Loading menus…</p>";
@@ -727,16 +629,16 @@
         syrupsCache = await fetchSyrups();
         renderSyrupsTable();
 
-        await refreshMenuFilters();
-        await refreshManualOrderMenus();
-        await refreshManualOrderDrinks();
-        await refreshManualSyrups();
+        refreshMenuFilters();
+        refreshManualOrderMenus();
+        refreshManualOrderDrinks();
+        refreshManualSyrups();
 
         handleManualSyrupChoiceChange();
 
         await refreshOrders();
 
-        setStatus(connectionStatusEl, "Data loaded.");
+        setStatus(connectionStatusEl, "Connected.");
       }
 
       // === Menus ===
@@ -750,7 +652,6 @@
           console.error("Error fetching menus:", error);
           return [];
         }
-        console.log("Host menus:", data);
         return data || [];
       }
 
@@ -868,8 +769,8 @@
               }
               menusCache = menusCache.filter((m) => m.id !== id);
               renderMenusTable();
-              await refreshMenuFilters();
-              await refreshManualOrderMenus();
+              refreshMenuFilters();
+              refreshManualOrderMenus();
             })
           );
       }
@@ -944,8 +845,8 @@
             }
             setStatus(statusEl, "Saved.");
             renderMenusTable();
-            await refreshMenuFilters();
-            await refreshManualOrderMenus();
+            refreshMenuFilters();
+            refreshManualOrderMenus();
           } catch (err) {
             console.error(err);
             setStatus(statusEl, "Error saving menu.");
@@ -960,10 +861,11 @@
       async function refreshMenus() {
         menusCache = await fetchMenus();
         renderMenusTable();
-        await refreshMenuFilters();
-        await refreshManualOrderMenus();
+        refreshMenuFilters();
+        refreshManualOrderMenus();
       }
 
+      // === Drinks ===
       async function fetchDrinks() {
         const { data, error } = await supabaseClient
           .from("drinks")
@@ -974,17 +876,15 @@
           console.error("Error fetching drinks:", error);
           return [];
         }
-        console.log("Host drinks:", data);
         return data || [];
       }
 
       async function refreshDrinks() {
         drinksCache = await fetchDrinks();
         renderDrinksTable();
-        await refreshManualOrderDrinks();
+        refreshManualOrderDrinks();
       }
 
-      // === Drinks ===
       function renderDrinksTable() {
         if (!drinksCache.length) {
           drinksTableContainer.innerHTML =
@@ -1150,7 +1050,7 @@
 
           setStatus(statusEl, "Saved.");
           renderDrinksTable();
-          await refreshManualOrderDrinks();
+          refreshManualOrderDrinks();
         });
 
         cancelBtn.addEventListener("click", () => {
@@ -1169,7 +1069,6 @@
           console.error("Error fetching categories:", error);
           return [];
         }
-        console.log("Categories:", data);
         return data || [];
       }
 
@@ -1344,14 +1243,13 @@
           console.error("Error fetching syrups:", error);
           return [];
         }
-        console.log("Syrups:", data);
         return data || [];
       }
 
       async function refreshSyrups() {
         syrupsCache = await fetchSyrups();
         renderSyrupsTable();
-        await refreshManualSyrups();
+        refreshManualSyrups();
       }
 
       function renderSyrupsTable() {
@@ -1427,7 +1325,7 @@
               }
               syrupsCache = syrupsCache.filter((s) => s.id !== id);
               renderSyrupsTable();
-              await refreshManualSyrups();
+              refreshManualSyrups();
             })
           );
       }
@@ -1519,7 +1417,7 @@
 
           setStatus(statusEl, "Saved.");
           renderSyrupsTable();
-          await refreshManualSyrups();
+          refreshManualSyrups();
         });
 
         cancelBtn.addEventListener("click", () => {
@@ -1538,7 +1436,6 @@
           console.error("Error fetching orders:", error);
           return [];
         }
-        console.log("Orders:", data);
         return data || [];
       }
 
@@ -1672,7 +1569,6 @@
           .forEach((btn) =>
             btn.addEventListener("click", async () => {
               const id = btn.getAttribute("data-id");
-              const row = btn.closest("tr");
               const current = filtered.find((o) => o.id === id);
               if (!current) return;
               const newCompleted = !current.is_completed;
@@ -1784,13 +1680,6 @@
 
       async function handleManualOrderSubmit(e) {
         e.preventDefault();
-        if (!supabaseClient) {
-          setStatus(
-            manualOrderStatus,
-            "No Supabase connection. Configure connection at top."
-          );
-          return;
-        }
         setStatus(manualOrderStatus, "Creating order…");
 
         const menuId = manualMenuSelect.value || null;
@@ -1859,9 +1748,7 @@
         })
       );
 
-      refreshMenusBtn.addEventListener("click", () => {
-        refreshMenus();
-      });
+      refreshMenusBtn.addEventListener("click", refreshMenus);
 
       createDrinkBtn.addEventListener("click", () =>
         renderDrinkEditForm({
@@ -1872,9 +1759,7 @@
         })
       );
 
-      refreshDrinksBtn.addEventListener("click", () => {
-        refreshDrinks();
-      });
+      refreshDrinksBtn.addEventListener("click", refreshDrinks);
 
       createCategoryBtn.addEventListener("click", () =>
         renderCategoryEditForm({
@@ -1900,10 +1785,12 @@
       ordersMenuFilter.addEventListener("change", refreshOrders);
       ordersStatusFilter.addEventListener("change", refreshOrders);
 
-      loadConnectionFromStorage();
-      if (supabaseClient) {
-        bootstrapData();
-      }
+      // Kick things off
+      setStatus(
+        connectionStatusEl,
+        "Using hard-coded Supabase connection…"
+      );
+      bootstrapData();
     </script>
   </body>
 </html>

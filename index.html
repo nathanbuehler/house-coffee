@@ -78,15 +78,6 @@
         font-size: 0.9rem;
         color: #555;
       }
-      .badge {
-        display: inline-block;
-        padding: 0.1rem 0.4rem;
-        font-size: 0.7rem;
-        border-radius: 999px;
-        background-color: #f3f4f6;
-        color: #4b5563;
-        margin-left: 0.4rem;
-      }
       .order-form {
         background: #fff;
         padding: 1rem;
@@ -255,6 +246,16 @@
 
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
+      // 🔐 Hard-coded Supabase credentials
+      // Must match host.html
+      const SUPABASE_URL = "https://cyfdiuyjzcrommxldpwp.supabase.co";
+      const SUPABASE_KEY = "sb_publishable_hzG6hrSF4DBFz9FrGC-Ghw_MSbQCHFo";
+
+      const supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
       const menuSelect = document.getElementById("menu-select");
       const menuSelectStatus =
         document.getElementById("menu-select-status");
@@ -276,14 +277,6 @@
         document.getElementById("submit-order-btn");
       const orderStatus = document.getElementById("order-status");
 
-      const SUPABASE_URL = localStorage.getItem("coffee-host-connection")
-        ? JSON.parse(localStorage.getItem("coffee-host-connection")).url
-        : "";
-      const SUPABASE_KEY = localStorage.getItem("coffee-host-connection")
-        ? JSON.parse(localStorage.getItem("coffee-host-connection")).key
-        : "";
-
-      let supabaseClient = null;
       let menusCache = [];
       let currentMenu = null;
       let currentMenuDrinks = [];
@@ -292,20 +285,6 @@
       function setStatus(el, message) {
         if (!el) return;
         el.textContent = message || "";
-      }
-
-      function initSupabase() {
-        if (!SUPABASE_URL || !SUPABASE_KEY) {
-          setStatus(
-            menuSelectStatus,
-            "Supabase connection not configured in host view."
-          );
-          return;
-        }
-        supabaseClient = window.supabase.createClient(
-          SUPABASE_URL,
-          SUPABASE_KEY
-        );
       }
 
       async function fetchMenus() {
@@ -320,7 +299,6 @@
           setStatus(menuSelectStatus, "Error loading menus.");
           return [];
         }
-        console.log("Guest menus:", data);
         return data || [];
       }
 
@@ -328,7 +306,7 @@
         const { data, error } = await supabaseClient
           .from("menu_items")
           .select(
-            "*, drinks!inner(name, description, categories(name))"
+            "*, drinks!inner(id, name, description, categories(name))"
           )
           .eq("menu_id", menuId)
           .order("sort_order", { ascending: true });
@@ -337,8 +315,6 @@
           console.error("Error fetching menu items:", error);
           return [];
         }
-
-        console.log("Menu items fetched:", data);
         return data || [];
       }
 
@@ -352,7 +328,6 @@
           console.error("Error fetching syrups:", error);
           return [];
         }
-        console.log("Guest syrups:", data);
         return data || [];
       }
 
@@ -468,7 +443,9 @@
         currentMenuDrinks.forEach((item) => {
           const drink = item.drinks;
           const opt = document.createElement("option");
-          opt.value = item.drinks_id || item.drink_id || drink.id;
+          const drinkId =
+            item.drinks_id || item.drink_id || (drink && drink.id);
+          opt.value = drinkId;
           opt.textContent = drink.name;
           drinkSelect.appendChild(opt);
         });
@@ -527,18 +504,6 @@
 
       async function handleOrderSubmit(e) {
         e.preventDefault();
-        if (!supabaseClient) {
-          setStatus(
-            orderStatus,
-            "Supabase connection not configured. Ask the host to set it up."
-          );
-          return;
-        }
-
-        if (!currentMenu) {
-          setStatus(orderStatus, "No menu selected.");
-          return;
-        }
 
         const customerName = customerNameInput.value.trim();
         const drinkId = drinkSelect.value;
@@ -551,6 +516,10 @@
             : null;
         const notes = notesInput.value.trim();
 
+        if (!currentMenu) {
+          setStatus(orderStatus, "No menu selected.");
+          return;
+        }
         if (!customerName) {
           setStatus(orderStatus, "Please enter your name.");
           return;
@@ -611,9 +580,6 @@
       orderForm.addEventListener("submit", handleOrderSubmit);
 
       async function bootstrap() {
-        initSupabase();
-        if (!supabaseClient) return;
-
         setStatus(menuSelectStatus, "Loading…");
 
         menusCache = await fetchMenus();
