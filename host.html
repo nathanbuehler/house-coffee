@@ -1010,12 +1010,6 @@
                 drink.description || ""
               }</textarea>
             </div>
-            <div class="form-group">
-              <label for="drink-base-price-input">Base price</label>
-              <input type="number" step="0.01" id="drink-base-price-input" value="${
-                drink.base_price != null ? drink.base_price : ""
-              }" />
-            </div>
             <button type="submit" class="btn-primary btn-small">${
               isNew ? "Create" : "Save"
             }</button>
