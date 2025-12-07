@@ -786,6 +786,13 @@
         return data;
       }
 
+      async function refreshMenus() {
+        menusCache = await fetchMenus();
+        renderMenusTable();
+        refreshMenuFilters();
+        refreshManualOrderMenus();
+      }
+
       function renderMenusTable() {
         if (!menusCache.length) {
           menusTableContainer.innerHTML =
