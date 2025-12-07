@@ -1,518 +1,848 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>House Coffee – Order</title>
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      padding: 20px;
-      max-width: 700px;
-      margin: 0 auto;
-    }
-    h1, h2, h3 {
-      margin-bottom: 10px;
-    }
-    .section {
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #eee;
-    }
-    .empty-text {
-      color: #777;
-      font-style: italic;
-    }
-    form {
-      margin-top: 10px;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-    }
-    label {
-      display: block;
-      margin-bottom: 10px;
-    }
-    input, select, button, textarea {
-      font: inherit;
-      padding: 6px 8px;
-      margin-top: 4px;
-      box-sizing: border-box;
-    }
-    input, select, textarea {
-      width: 100%;
-    }
-    textarea {
-      resize: vertical;
-    }
-    button {
-      cursor: pointer;
-    }
-    #status-message {
-      margin-top: 8px;
-      font-size: 0.9rem;
-      color: #555;
-    }
-    .nav {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .nav button {
-      font: inherit;
-      padding: 6px 10px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      background: #f5f5f5;
-      cursor: pointer;
-    }
-    .nav button.active {
-      font-weight: 600;
-      background: #ddd;
-    }
-    .category-block {
-      margin-bottom: 16px;
-    }
-    .category-block h3 {
-      margin-bottom: 6px;
-      font-size: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: #444;
-    }
-    .drink-list {
-      list-style: none;
-      padding-left: 0;
-      margin: 0;
-    }
-    .drink-list li {
-      padding: 2px 0;
-    }
-    #active-menu-name {
-      font-size: 0.9rem;
-      color: #555;
-      margin-bottom: 8px;
-    }
-  </style>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
-  <div class="nav">
-    <button class="active" type="button" onclick="window.location.href='/'">
-      Guest view
-    </button>
-    <button type="button" onclick="window.location.href='host.html'">
-      Host view
-    </button>
-  </div>
-
-  <h1>House Coffee – Order</h1>
-
-  <section class="section">
-    <h2>Menu</h2>
-    <div id="active-menu-name"></div>
-    <div id="menu"></div>
-  </section>
-
-  <section class="section">
-    <h2>Place an order</h2>
-    <form id="order-form">
-      <label>
-        Your name
-        <input id="customer-name" required />
-      </label>
-      <label>
-        Drink
-        <select id="drink-select"></select>
-      </label>
-      <label>
-        Milk
-        <select id="milk-select"></select>
-      </label>
-      <label>
-        Add syrup?
-        <select id="syrup-select">
-          <option value="no" selected>No</option>
-          <option value="yes">Yes</option>
-        </select>
-      </label>
-      <label>
-        Syrup flavour
-        <select id="syrup-flavour-select">
-          <option value="">None</option>
-        </select>
-      </label>
-      <label>
-        Iced?
-        <select id="iced-select">
-          <option value="no" selected>No</option>
-          <option value="yes">Yes</option>
-        </select>
-      </label>
-      <label>
-        Notes (optional)
-        <textarea id="notes" rows="3" placeholder="Extra hot, light ice, no foam, etc."></textarea>
-      </label>
-      <button type="submit">Place order</button>
-      <div id="status-message"></div>
-    </form>
-  </section>
-
-  <script>
-    const SUPABASE_URL = "https://cyfdiuyjzcrommxldpwp.supabase.co";
-    const SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5ZmRpdXlqemNyb21teGxkcHdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwNDI0NTAsImV4cCI6MjA4MDYxODQ1MH0.e1gLM0wDzIifa1tbKkaJ7KjIz9038cBSNpZBfYdsSOM";
-    const supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
-
-    const menuDiv = document.getElementById("menu");
-    const activeMenuNameDiv = document.getElementById("active-menu-name");
-    const drinkSelect = document.getElementById("drink-select");
-    const milkSelect = document.getElementById("milk-select");
-    const orderForm = document.getElementById("order-form");
-    const statusMessage = document.getElementById("status-message");
-    const syrupSelect = document.getElementById("syrup-select");
-    const syrupFlavourSelect = document.getElementById("syrup-flavour-select");
-    const icedSelect = document.getElementById("iced-select");
-    const notesInput = document.getElementById("notes");
-
-    let drinks = [];
-    let syrups = [];
-    let activeMenuId = null;
-    let activeMenuName = null;
-
-    function getDefaultMenu() {
-      return [
-        {
-          id: "default-latte",
-          name: "Latte",
-          milks: ["Whole", "Skim", "Oat", "Almond"],
-          categoryName: "Coffee"
-        },
-        {
-          id: "default-americano",
-          name: "Americano",
-          milks: ["Black", "Splash of milk"],
-          categoryName: "Coffee"
-        }
-      ];
-    }
-
-    function getDefaultSyrups() {
-      return [
-        { name: "Vanilla" },
-        { name: "Caramel" },
-        { name: "Hazelnut" },
-        { name: "Mocha" },
-        { name: "Pumpkin Spice" }
-      ];
-    }
-
-    async function loadActiveMenu() {
-      activeMenuId = null;
-      activeMenuName = null;
-      activeMenuNameDiv.textContent = "";
-
-      let { data, error } = await supabaseClient
-        .from("menus")
-        .select("*")
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error loading active menu:", error);
+  <head>
+    <meta charset="UTF-8" />
+    <title>Coffee Menu | Nathan | Supabase</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        color: #333;
       }
+      header {
+        background-color: #333;
+        color: #fff;
+        padding: 1rem;
+        text-align: center;
+      }
+      main {
+        padding: 1rem;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1,
+      h2,
+      h3 {
+        margin-bottom: 0.5rem;
+      }
+      .section {
+        background: #fff;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+      .menu-category {
+        margin-bottom: 1rem;
+      }
+      .drink-card {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .drink-info {
+        flex: 1;
+      }
+      .drink-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+      .drink-description {
+        font-size: 0.9rem;
+        color: #555;
+      }
+      .drink-price {
+        margin-top: 0.25rem;
+        font-size: 0.9rem;
+        color: #333;
+      }
+      .drink-actions {
+        margin-left: 1rem;
+      }
+      button {
+        cursor: pointer;
+      }
+      .order-form-group {
+        margin-bottom: 0.75rem;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 6px 8px;
+        font-size: 0.95rem;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+      }
+      textarea {
+        resize: vertical;
+      }
+      button {
+        cursor: pointer;
+      }
+      #status-message {
+        margin-top: 8px;
+        font-size: 0.9rem;
+      }
+      .status-success {
+        color: #2f855a;
+      }
+      .status-error {
+        color: #c53030;
+      }
+      .nav {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-bottom: 1rem;
+        gap: 0.25rem;
+      }
+      .nav button {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.85rem;
+        border-radius: 999px;
+        border: 1px solid #ddd;
+        background: #f7f7f7;
+      }
+      .nav button.active {
+        background: #333;
+        color: white;
+        border-color: #333;
+      }
+      .menu-selector {
+        margin-bottom: 1rem;
+      }
+      .menu-selector select {
+        width: auto;
+        min-width: 200px;
+      }
+      .syrup-select-group {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .syrup-flavour-select {
+        max-width: 250px;
+      }
+      .small-note {
+        font-size: 0.8rem;
+        color: #666;
+        margin-top: 0.25rem;
+      }
+      .inline-radio-group {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .inline-radio-group label {
+        font-weight: 400;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin: 0;
+      }
+      .inline-radio-group input[type="radio"] {
+        width: auto;
+      }
+      .milk-select {
+        max-width: 220px;
+      }
+      .iced-select-group {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+      .iced-select-group label {
+        font-weight: 400;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin: 0;
+      }
+      .iced-select-group input[type="radio"] {
+        width: auto;
+      }
+      .submit-area {
+        margin-top: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+      }
+      .submit-area button[type="submit"] {
+        background: #3182ce;
+        color: #fff;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        font-size: 0.95rem;
+      }
+      .submit-area button[type="submit"]:disabled {
+        background: #a0aec0;
+        cursor: default;
+      }
+      .menu-description {
+        font-size: 0.9rem;
+        color: #555;
+        margin-bottom: 0.75rem;
+      }
+      .menu-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 0.5rem;
+      }
+      .menu-title-row h2 {
+        margin: 0;
+      }
+      .menu-title-row span {
+        font-size: 0.85rem;
+        color: #666;
+      }
+      .menu-empty-text {
+        font-size: 0.9rem;
+        color: #777;
+        font-style: italic;
+      }
+      .menu-drinks-container {
+        margin-top: 0.5rem;
+      }
+      .order-name-note {
+        font-size: 0.8rem;
+        color: #666;
+        margin-top: 0.15rem;
+      }
+      .menu-selector-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .menu-selector-row span {
+        font-size: 0.85rem;
+        color: #666;
+      }
+      @media (max-width: 600px) {
+        .drink-card {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .drink-actions {
+          margin-left: 0;
+          margin-top: 0.5rem;
+        }
+        .menu-selector-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Nathan's Coffee Menu</h1>
+    </header>
 
-      if (!data) {
-        const fallback = await supabaseClient
+    <main>
+      <div class="nav">
+        <button
+          class="active"
+          type="button"
+          onclick="window.location.href='index.html'"
+        >
+          Guest view
+        </button>
+        <button
+          type="button"
+          onclick="window.location.href='host.html'"
+        >
+          Host view
+        </button>
+      </div>
+
+      <section class="section" id="menu-section">
+        <div class="menu-selector">
+          <div class="menu-selector-row">
+            <div>
+              <label for="menu-select">Select a menu:</label>
+              <select id="menu-select"></select>
+            </div>
+            <span id="menu-last-updated"></span>
+          </div>
+        </div>
+
+        <div class="menu-header">
+          <div class="menu-title-row">
+            <h2 id="menu-title">Menu</h2>
+          </div>
+          <p id="menu-description" class="menu-description"></p>
+        </div>
+
+        <div id="menu-container"></div>
+      </section>
+
+      <section class="section" id="order-section">
+        <h2>Place your order</h2>
+        <form id="order-form">
+          <div class="order-form-group">
+            <label for="customer-name-input">Your name</label>
+            <input
+              type="text"
+              id="customer-name-input"
+              placeholder="What should we call out?"
+              required
+            />
+            <div class="order-name-note">
+              If you skip this, your coffee might be “Mysterious Stranger”.
+            </div>
+          </div>
+
+          <div class="order-form-group">
+            <label for="drink-select">Drink</label>
+            <select id="drink-select" required></select>
+          </div>
+
+          <div class="order-form-group">
+            <label for="milk-select">Milk</label>
+            <select id="milk-select" class="milk-select">
+              <option value="Whole">Whole</option>
+              <option value="2%">2%</option>
+              <option value="Skim">Skim</option>
+              <option value="Oat">Oat</option>
+              <option value="Almond">Almond</option>
+              <option value="Soy">Soy</option>
+            </select>
+          </div>
+
+          <div class="order-form-group">
+            <label>Syrup?</label>
+            <div class="inline-radio-group">
+              <label>
+                <input type="radio" name="syrup-choice" value="no" checked />
+                No
+              </label>
+              <label>
+                <input type="radio" name="syrup-choice" value="yes" />
+                Yes
+              </label>
+            </div>
+            <div
+              id="syrup-flavour-container"
+              class="syrup-flavour-select"
+              style="margin-top: 0.5rem; display: none;"
+            >
+              <label for="syrup-flavour-select">Syrup flavour</label>
+              <select id="syrup-flavour-select"></select>
+            </div>
+            <div class="small-note">
+              Syrup flavours depend on what the host has on the bar right now.
+            </div>
+          </div>
+
+          <div class="order-form-group">
+            <label>Iced?</label>
+            <div class="iced-select-group">
+              <label>
+                <input type="radio" name="iced-choice" value="no" checked />
+                No
+              </label>
+              <label>
+                <input type="radio" name="iced-choice" value="yes" />
+                Yes
+              </label>
+            </div>
+          </div>
+
+          <div class="order-form-group">
+            <label for="notes-input">Special requests / notes</label>
+            <textarea
+              id="notes-input"
+              rows="3"
+              placeholder="Extra hot, less ice, no judgement…"
+            ></textarea>
+          </div>
+
+          <div class="submit-area">
+            <button type="submit" id="submit-order-btn">Submit order</button>
+            <span id="status-message"></span>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const SUPABASE_URL = "https://ccfjusfoummnycswxlvi.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZmp1c2ZvdW1tbnljc3d4bHZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM1ODQwNTMsImV4cCI6MjA0OTE2MDA1M30.Z7zNaLqwVENVfwE1E-Y3Ne0nfnpQ1g4KA0UOGHIN6Bc";
+
+      const supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+      const menuSelectEl = document.getElementById("menu-select");
+      const menuContainerEl = document.getElementById("menu-container");
+      const drinkSelectEl = document.getElementById("drink-select");
+      const menuTitleEl = document.getElementById("menu-title");
+      const menuDescriptionEl = document.getElementById("menu-description");
+      const menuLastUpdatedEl = document.getElementById("menu-last-updated");
+
+      const syrupChoiceRadios = document.querySelectorAll(
+        'input[name="syrup-choice"]'
+      );
+      const syrupFlavourContainer = document.getElementById(
+        "syrup-flavour-container"
+      );
+      const syrupFlavourSelect = document.getElementById("syrup-flavour-select");
+      const icedChoiceRadios = document.querySelectorAll(
+        'input[name="iced-choice"]'
+      );
+
+      const orderForm = document.getElementById("order-form");
+      const customerNameInput = document.getElementById("customer-name-input");
+      const milkSelect = document.getElementById("milk-select");
+      const notesInput = document.getElementById("notes-input");
+      const submitOrderBtn = document.getElementById("submit-order-btn");
+      const statusMessageEl = document.getElementById("status-message");
+
+      let currentMenu = null;
+      let currentMenuDrinks = [];
+      let currentMenuSyrups = [];
+
+      async function fetchMenus() {
+        const { data, error } = await supabaseClient
           .from("menus")
           .select("*")
-          .order("sort_order", { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        if (!fallback.error && fallback.data) {
-          data = fallback.data;
-        }
-      }
-
-      if (data) {
-        activeMenuId = data.id;
-        activeMenuName = data.name;
-        activeMenuNameDiv.textContent = `Showing menu: ${activeMenuName}`;
-      } else {
-        activeMenuNameDiv.textContent =
-          "No menus configured. Ask your host to sort their life out.";
-      }
-    }
-
-    async function loadMenuFromSupabase() {
-      try {
-        if (!activeMenuId) {
-          drinks = getDefaultMenu();
-        } else {
-          const { data, error } = await supabaseClient
-            .from("menu_items")
-            .select("id,name,milks,category_id,category:categories(name)")
-            .eq("menu_id", activeMenuId)
-            .order("created_at", { ascending: true });
-
-          if (error) {
-            console.error("Error loading menu:", error);
-            drinks = getDefaultMenu();
-          } else if (!data || data.length === 0) {
-            drinks = [];
-          } else {
-            drinks = data.map(row => ({
-              id: row.id,
-              name: row.name,
-              milks: row.milks || [],
-              categoryId: row.category_id || null,
-              categoryName: row.category?.name || null
-            }));
-          }
-        }
-      } catch (e) {
-        console.error("Unexpected error loading menu:", e);
-        drinks = getDefaultMenu();
-      }
-
-      renderMenu();
-      renderDrinkDropdown();
-    }
-
-    async function loadSyrupsFromSupabase() {
-      try {
-        const { data, error } = await supabaseClient
-          .from("syrups")
-          .select("*")
-          .eq("active", true)
-          .order("sort_order", { ascending: true })
           .order("name", { ascending: true });
 
         if (error) {
-          console.error("Error loading syrups:", error);
-          syrups = getDefaultSyrups();
-        } else if (!data || data.length === 0) {
-          syrups = getDefaultSyrups();
-        } else {
-          syrups = data.map(row => ({
-            id: row.id,
-            name: row.name
-          }));
+          console.error("Error fetching menus:", error);
+          menuContainerEl.innerHTML =
+            '<p class="menu-empty-text">Unable to load menus. Please try again later.</p>';
+          return [];
         }
-      } catch (e) {
-        console.error("Unexpected error loading syrups:", e);
-        syrups = getDefaultSyrups();
+
+        return data || [];
       }
 
-      renderSyrupFlavours();
-    }
-
-    function renderMenu() {
-      menuDiv.innerHTML = "";
-
-      if (!drinks || drinks.length === 0) {
-        const p = document.createElement("p");
-        p.className = "empty-text";
-        p.textContent = "No drinks on this menu.";
-        menuDiv.appendChild(p);
-        return;
-      }
-
-      const grouped = {};
-      drinks.forEach(drink => {
-        const cat = drink.categoryName || "Other";
-        if (!grouped[cat]) grouped[cat] = [];
-        grouped[cat].push(drink);
-      });
-
-      const categoryNames = Object.keys(grouped).sort((a, b) =>
-        a.localeCompare(b)
-      );
-
-      categoryNames.forEach(categoryName => {
-        const block = document.createElement("div");
-        block.className = "category-block";
-
-        const heading = document.createElement("h3");
-        heading.textContent = categoryName;
-        block.appendChild(heading);
-
-        const ul = document.createElement("ul");
-        ul.className = "drink-list";
-
-        const drinksInCategory = grouped[categoryName]
-          .slice()
-          .sort((a, b) => a.name.localeCompare(b.name));
-
-        drinksInCategory.forEach(drink => {
-          const li = document.createElement("li");
-          li.textContent = drink.name;
-          ul.appendChild(li);
-        });
-
-        block.appendChild(ul);
-        menuDiv.appendChild(block);
-      });
-    }
-
-    function renderDrinkDropdown() {
-      drinkSelect.innerHTML = "";
-      milkSelect.innerHTML = "";
-
-      if (!drinks || drinks.length === 0) {
-        const opt = document.createElement("option");
-        opt.textContent = "No drinks available";
-        opt.disabled = true;
-        opt.selected = true;
-        drinkSelect.appendChild(opt);
-        return;
-      }
-
-      const sorted = drinks.slice().sort((a, b) => a.name.localeCompare(b.name));
-
-      sorted.forEach(drink => {
-        const opt = document.createElement("option");
-        opt.value = drink.id;
-        opt.textContent = drink.name;
-        drinkSelect.appendChild(opt);
-      });
-
-      updateMilkOptionsForSelectedDrink();
-    }
-
-    function findDrinkBySelectValue() {
-      const selectedId = drinkSelect.value;
-      if (!selectedId) return null;
-      return drinks.find(d => String(d.id) === String(selectedId));
-    }
-
-    function updateMilkOptionsForSelectedDrink() {
-      const drink = findDrinkBySelectValue();
-      milkSelect.innerHTML = "";
-
-      if (!drink) return;
-
-      (drink.milks || []).forEach(milk => {
-        const opt = document.createElement("option");
-        opt.value = milk;
-        opt.textContent = milk;
-        milkSelect.appendChild(opt);
-      });
-    }
-
-    drinkSelect.addEventListener("change", () => {
-      updateMilkOptionsForSelectedDrink();
-    });
-
-    function renderSyrupFlavours() {
-      syrupFlavourSelect.innerHTML = "";
-      const noneOpt = document.createElement("option");
-      noneOpt.value = "";
-      noneOpt.textContent = "None";
-      syrupFlavourSelect.appendChild(noneOpt);
-
-      (syrups || []).forEach(syrup => {
-        const opt = document.createElement("option");
-        opt.value = syrup.name;
-        opt.textContent = syrup.name;
-        syrupFlavourSelect.appendChild(opt);
-      });
-    }
-
-    syrupSelect.addEventListener("change", () => {
-      const wantsSyrup = syrupSelect.value === "yes";
-      syrupFlavourSelect.disabled = !wantsSyrup;
-      if (!wantsSyrup) {
-        syrupFlavourSelect.value = "";
-      }
-    });
-    syrupFlavourSelect.disabled = syrupSelect.value !== "yes";
-
-    async function createOrderInSupabase(orderPayload) {
-      try {
+      async function fetchMenuItems(menuId) {
         const { data, error } = await supabaseClient
-          .from("orders")
-          .insert(orderPayload)
-          .select()
-          .single();
+          .from("menu_items")
+          .select("*, drinks!inner(name, description, base_price, category)")
+          .eq("menu_id", menuId)
+          .order("sort_order", { ascending: true });
 
         if (error) {
-          console.error("Error creating order:", error);
-          statusMessage.textContent = "Something went wrong. Please try again.";
-          return null;
+          console.error("Error fetching menu items:", error);
+          return [];
         }
-        return data;
-      } catch (e) {
-        console.error("Unexpected error creating order:", e);
-        statusMessage.textContent = "Something went wrong. Please try again.";
-        return null;
-      }
-    }
 
-    orderForm.addEventListener("submit", async event => {
-      event.preventDefault();
-      statusMessage.textContent = "";
-
-      if (!drinks || drinks.length === 0) {
-        statusMessage.textContent = "Menu not available.";
-        return;
+        return data || [];
       }
 
-      const drink = findDrinkBySelectValue();
-      if (!drink) {
-        statusMessage.textContent = "Please select a drink.";
-        return;
+      async function fetchMenuSyrups(menuId) {
+        const { data, error } = await supabaseClient
+          .from("syrups")
+          .select("*")
+          .eq("menu_id", menuId)
+          .order("name", { ascending: true });
+
+        if (error) {
+          console.error("Error fetching syrups:", error);
+          return [];
+        }
+
+        return data || [];
       }
 
-      const customerName = document
-        .getElementById("customer-name")
-        .value.trim();
-      const selectedMilk = milkSelect.value || null;
-      const syrupChoice = syrupSelect.value;
-      const syrupFlavour = syrupFlavourSelect.value;
-      const icedChoice = icedSelect.value;
-      const notes = notesInput.value.trim();
-
-      if (!customerName) {
-        statusMessage.textContent = "Please enter your name.";
-        return;
+      function groupDrinksByCategory(menuItems) {
+        const grouped = {};
+        for (const item of menuItems) {
+          const category = item.drinks.category || "Other";
+          if (!grouped[category]) {
+            grouped[category] = [];
+          }
+          grouped[category].push(item);
+        }
+        return grouped;
       }
 
-      const payload = {
-        customer_name: customerName,
-        drink: drink.name,
-        size: null,
-        milk: selectedMilk,
-        syrup: syrupChoice === "yes",
-        syrup_flavour:
-          syrupChoice === "yes" && syrupFlavour ? syrupFlavour : null,
-        iced: icedChoice === "yes",
-        notes: notes || null
-      };
+      function renderMenu() {
+        menuContainerEl.innerHTML = "";
 
-      const created = await createOrderInSupabase(payload);
-      if (!created) return;
+        if (!currentMenu || currentMenuDrinks.length === 0) {
+          menuContainerEl.innerHTML =
+            '<p class="menu-empty-text">This menu has no drinks yet.</p>';
+          return;
+        }
 
-      document.getElementById("customer-name").value = "";
-      notesInput.value = "";
-      syrupSelect.value = "no";
-      syrupFlavourSelect.value = "";
-      syrupFlavourSelect.disabled = true;
-      icedSelect.value = "no";
+        const grouped = groupDrinksByCategory(currentMenuDrinks);
 
-      statusMessage.textContent = "Order placed! Your barista has it.";
-    });
+        for (const [categoryName, items] of Object.entries(grouped)) {
+          const categoryDiv = document.createElement("div");
+          categoryDiv.className = "menu-category";
 
-    (async () => {
-      await loadActiveMenu();
-      await Promise.all([loadMenuFromSupabase(), loadSyrupsFromSupabase()]);
-    })();
-  </script>
-</body>
+          const h3 = document.createElement("h3");
+          h3.textContent = categoryName;
+          categoryDiv.appendChild(h3);
+
+          const drinksContainer = document.createElement("div");
+          drinksContainer.className = "menu-drinks-container";
+
+          items.forEach((item) => {
+            const drink = item.drinks;
+
+            const card = document.createElement("div");
+            card.className = "drink-card";
+
+            const infoDiv = document.createElement("div");
+            infoDiv.className = "drink-info";
+
+            const nameDiv = document.createElement("div");
+            nameDiv.className = "drink-name";
+            nameDiv.textContent = drink.name;
+
+            const descriptionDiv = document.createElement("div");
+            descriptionDiv.className = "drink-description";
+            descriptionDiv.textContent = drink.description || "";
+
+            const priceDiv = document.createElement("div");
+            priceDiv.className = "drink-price";
+            priceDiv.textContent =
+              drink.base_price != null
+                ? `$${drink.base_price.toFixed(2)}`
+                : "Price TBD";
+
+            infoDiv.appendChild(nameDiv);
+            if (drink.description) infoDiv.appendChild(descriptionDiv);
+            infoDiv.appendChild(priceDiv);
+
+            const actionsDiv = document.createElement("div");
+            actionsDiv.className = "drink-actions";
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = "Select";
+            button.onclick = () => {
+              drinkSelectEl.value = item.drink_id;
+            };
+
+            actionsDiv.appendChild(button);
+
+            card.appendChild(infoDiv);
+            card.appendChild(actionsDiv);
+
+            drinksContainer.appendChild(card);
+          });
+
+          categoryDiv.appendChild(drinksContainer);
+          menuContainerEl.appendChild(categoryDiv);
+        }
+      }
+
+      function renderDrinkSelect() {
+        drinkSelectEl.innerHTML = "";
+
+        if (!currentMenuDrinks || currentMenuDrinks.length === 0) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "No drinks available";
+          drinkSelectEl.appendChild(opt);
+          drinkSelectEl.disabled = true;
+          return;
+        }
+
+        drinkSelectEl.disabled = false;
+
+        const defaultOpt = document.createElement("option");
+        defaultOpt.value = "";
+        defaultOpt.textContent = "Select a drink";
+        drinkSelectEl.appendChild(defaultOpt);
+
+        const drinksSorted = [...currentMenuDrinks].sort((a, b) =>
+          a.drinks.name.localeCompare(b.drinks.name)
+        );
+
+        for (const item of drinksSorted) {
+          const opt = document.createElement("option");
+          opt.value = item.drink_id;
+          opt.textContent = item.drinks.name;
+          drinkSelectEl.appendChild(opt);
+        }
+      }
+
+      function renderSyrupFlavourSelect() {
+        syrupFlavourSelect.innerHTML = "";
+
+        if (!currentMenuSyrups || currentMenuSyrups.length === 0) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "No syrups available";
+          syrupFlavourSelect.appendChild(opt);
+          syrupFlavourSelect.disabled = true;
+          return;
+        }
+
+        syrupFlavourSelect.disabled = false;
+
+        const defaultOpt = document.createElement("option");
+        defaultOpt.value = "";
+        defaultOpt.textContent = "Select a flavour";
+        syrupFlavourSelect.appendChild(defaultOpt);
+
+        currentMenuSyrups.forEach((s) => {
+          const opt = document.createElement("option");
+          opt.value = s.name;
+          opt.textContent = s.name;
+          syrupFlavourSelect.appendChild(opt);
+        });
+      }
+
+      function handleSyrupChoiceChange() {
+        const selected = Array.from(syrupChoiceRadios).find((r) => r.checked);
+        if (!selected) return;
+
+        if (selected.value === "yes") {
+          syrupFlavourContainer.style.display = "block";
+        } else {
+          syrupFlavourContainer.style.display = "none";
+          syrupFlavourSelect.value = "";
+        }
+      }
+
+      syrupChoiceRadios.forEach((radio) => {
+        radio.addEventListener("change", handleSyrupChoiceChange);
+      });
+
+      function setStatus(message, isError = false) {
+        if (!message) {
+          statusMessageEl.textContent = "";
+          statusMessageEl.className = "";
+          return;
+        }
+
+        statusMessageEl.textContent = message;
+        statusMessageEl.className = isError
+          ? "status-error"
+          : "status-success";
+      }
+
+      async function handleOrderSubmit(e) {
+        e.preventDefault();
+        setStatus("");
+        submitOrderBtn.disabled = true;
+
+        try {
+          if (!currentMenu) {
+            setStatus("No menu is selected.", true);
+            return;
+          }
+
+          const customerName = customerNameInput.value.trim();
+          const drinkId = drinkSelectEl.value;
+          const selectedMilk = milkSelect.value || null;
+          const syrupChoice = Array.from(syrupChoiceRadios).find(
+            (r) => r.checked
+          )?.value;
+          const icedChoice = Array.from(icedChoiceRadios).find(
+            (r) => r.checked
+          )?.value;
+          const syrupFlavour =
+            syrupChoice === "yes" ? syrupFlavourSelect.value || null : null;
+          const notes = notesInput.value.trim() || null;
+
+          if (!customerName) {
+            setStatus("Please enter your name.", true);
+            return;
+          }
+
+          if (!drinkId) {
+            setStatus("Please select a drink.", true);
+            return;
+          }
+
+          const drink = currentMenuDrinks.find(
+            (item) => item.drink_id === drinkId
+          );
+          if (!drink) {
+            setStatus("Selected drink not found. Please refresh.", true);
+            return;
+          }
+
+          if (syrupChoice === "yes" && !syrupFlavour) {
+            setStatus("Please select a syrup flavour.", true);
+            return;
+          }
+
+          const payload = {
+            customer_name: customerName,
+            drink: drink.drinks.name,
+            milk: selectedMilk,
+            syrup: syrupChoice === "yes",
+            syrup_flavour:
+              syrupChoice === "yes" && syrupFlavour ? syrupFlavour : null,
+            iced: icedChoice === "yes",
+            notes: notes || null
+          };
+
+          const { error } = await supabaseClient.from("orders").insert([
+            {
+              menu_id: currentMenu.id,
+              ...payload
+            }
+          ]);
+
+          if (error) {
+            console.error("Error inserting order:", error);
+            setStatus(
+              "There was a problem placing your order. Please try again.",
+              true
+            );
+            return;
+          }
+
+          orderForm.reset();
+          handleSyrupChoiceChange();
+
+          setStatus("Order placed! Your drink will be on the way soon.");
+        } catch (err) {
+          console.error("Unexpected error:", err);
+          setStatus(
+            "An unexpected error occurred. Please try again later.",
+            true
+          );
+        } finally {
+          submitOrderBtn.disabled = false;
+        }
+      }
+
+      orderForm.addEventListener("submit", handleOrderSubmit);
+
+      async function handleMenuChange() {
+        const menuId = menuSelectEl.value;
+        if (!menuId) {
+          currentMenu = null;
+          currentMenuDrinks = [];
+          currentMenuSyrups = [];
+          menuTitleEl.textContent = "Menu";
+          menuDescriptionEl.textContent = "";
+          menuLastUpdatedEl.textContent = "";
+          renderMenu();
+          renderDrinkSelect();
+          renderSyrupFlavourSelect();
+          return;
+        }
+
+        const selectedOption = menuSelectEl.selectedOptions[0];
+        currentMenu = {
+          id: menuId,
+          name: selectedOption.dataset.menuName,
+          description: selectedOption.dataset.menuDescription,
+          last_updated: selectedOption.dataset.menuLastUpdated
+        };
+
+        menuTitleEl.textContent = currentMenu.name || "Menu";
+        menuDescriptionEl.textContent =
+          currentMenu.description || "Browse the drinks below.";
+
+        if (currentMenu.last_updated) {
+          const lastUpdatedDate = new Date(currentMenu.last_updated);
+          if (!isNaN(lastUpdatedDate.getTime())) {
+            menuLastUpdatedEl.textContent = `Last updated: ${lastUpdatedDate.toLocaleString()}`;
+          } else {
+            menuLastUpdatedEl.textContent = "";
+          }
+        } else {
+          menuLastUpdatedEl.textContent = "";
+        }
+
+        currentMenuDrinks = await fetchMenuItems(menuId);
+        currentMenuSyrups = await fetchMenuSyrups(menuId);
+
+        renderMenu();
+        renderDrinkSelect();
+        renderSyrupFlavourSelect();
+      }
+
+      menuSelectEl.addEventListener("change", handleMenuChange);
+
+      async function init() {
+        setStatus("");
+        menuContainerEl.innerHTML =
+          "<p>Loading menu... assuming the espresso machine cooperates.</p>";
+
+        const menus = await fetchMenus();
+
+        menuSelectEl.innerHTML = "";
+        const defaultOpt = document.createElement("option");
+        defaultOpt.value = "";
+        defaultOpt.textContent = "Select a menu";
+        menuSelectEl.appendChild(defaultOpt);
+
+        if (!menus || menus.length === 0) {
+          menuContainerEl.innerHTML =
+            '<p class="menu-empty-text">No menus available yet.</p>';
+          drinkSelectEl.innerHTML = "";
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "No drinks available";
+          drinkSelectEl.appendChild(opt);
+          drinkSelectEl.disabled = true;
+          syrupFlavourSelect.innerHTML = "";
+          const syrupOpt = document.createElement("option");
+          syrupOpt.value = "";
+          syrupOpt.textContent = "No syrups available";
+          syrupFlavourSelect.appendChild(syrupOpt);
+          syrupFlavourSelect.disabled = true;
+          return;
+        }
+
+        menus.forEach((menu) => {
+          const opt = document.createElement("option");
+          opt.value = menu.id;
+          opt.textContent = menu.name || "Untitled menu";
+          opt.dataset.menuName = menu.name || "Untitled menu";
+          opt.dataset.menuDescription = menu.description || "";
+          opt.dataset.menuLastUpdated = menu.updated_at || "";
+          menuSelectEl.appendChild(opt);
+        });
+
+        const defaultMenu =
+          menus.find((m) => m.is_default) || menus[0] || null;
+
+        if (defaultMenu) {
+          menuSelectEl.value = defaultMenu.id;
+          await handleMenuChange();
+        } else {
+          currentMenu = null;
+          currentMenuDrinks = [];
+          currentMenuSyrups = [];
+          renderMenu();
+          renderDrinkSelect();
+          renderSyrupFlavourSelect();
+        }
+
+        handleSyrupChoiceChange();
+      }
+
+      init();
+    </script>
+  </body>
 </html>
